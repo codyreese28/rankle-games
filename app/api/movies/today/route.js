@@ -63,18 +63,20 @@ export async function GET() {
     (a, b) => new Date(a.release_date) - new Date(b.release_date)
   );
 
-  return Response.json({
-    date: today,
-    challenge: "Sort these movies from oldest to newest.",
-    movies: selectedMovies.map(movie => ({
-      id: movie.id,
-      title: movie.title,
-      posterPath: movie.poster_path,
-    })),
-    answer: correctOrder.map(movie => ({
-      id: movie.id,
-      title: movie.title,
-      releaseDate: movie.release_date,
-    })),
-  });
+ return Response.json({
+  date: today,
+  gameType: "movies",
+  title: "Rankle Movies",
+  challenge: "Sort these movies from oldest to newest.",
+  items: selectedMovies.map((movie) => ({
+    id: movie.id,
+    title: movie.title,
+    image: `https://image.tmdb.org/t/p/w185${movie.poster_path}`,
+  })),
+  answer: correctOrder.map((movie) => ({
+    id: movie.id,
+    title: movie.title,
+    releaseDate: movie.release_date,
+  })),
+});
 }

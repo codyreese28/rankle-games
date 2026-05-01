@@ -1,287 +1,30 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+const games = [
+  {
+    title: "Rankle Movies",
+    description: "Sort 5 movies from oldest to newest.",
+    href: "/movies",
+    emoji: "🎬",
+    label: "Movies",
+  },
+  {
+    title: "Rankle Video Games",
+    description: "Sort 5 video games from oldest to newest.",
+    href: "/games",
+    emoji: "🎮",
+    label: "Games",
+  },
+  {
+    title: "Rankle Music",
+    description: "Sort songs or albums from oldest to newest.",
+    href: "/music",
+    emoji: "🎵",
+    label: "Music",
+  },
+];
 
-type Movie = {
-  id: number;
-  title: string;
-  posterPath: string;
-};
-
-type AnswerMovie = {
-  id: number;
-  title: string;
-  releaseDate: string;
-};
-
-type Puzzle = {
-  date: string;
-  challenge: string;
-  movies: Movie[];
-  answer: AnswerMovie[];
-};
-
-type SavedGame = {
-  movieOrder: number[];
-  guesses: string[][];
-  message: string;
-  gameOver: boolean;
-  won: boolean;
-};
-
-type SortableMovieCardProps = {
-  movie: Movie;
-  index: number;
-  gameOver: boolean;
-};
-
-function SortableMovieCard({ movie, index, gameOver }: SortableMovieCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: movie.id,
-    disabled: gameOver,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.72 : 1,
-    scale: isDragging ? "1.02" : "1",
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`group rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-lg backdrop-blur-sm transition hover:bg-white/[0.075] ${
-        gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-400/10 text-sm font-black text-emerald-300 ring-1 ring-emerald-400/20">
-            {index + 1}
-          </div>
-
-          <img
-            src={`https://image.tmdb.org/t/p/w92${movie.posterPath}`}
-            alt={movie.title}
-            className="h-[72px] w-12 shrink-0 rounded-xl object-cover shadow-md ring-1 ring-white/10"
-          />
-
-          <div className="min-w-0">
-            <div className="truncate text-base font-bold text-white">
-              {movie.title}
-            </div>
-            <div className="mt-1 text-xs text-zinc-500">
-              {gameOver ? "Locked" : "Drag to reorder"}
-            </div>
-          </div>
-        </div>
-
-        {!gameOver && (
-          <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-zinc-500 transition group-hover:text-zinc-300">
-            ☰
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function Home() {
-  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [guesses, setGuesses] = useState<string[][]>([]);
-  const [message, setMessage] = useState("");
-  const [gameOver, setGameOver] = useState(false);
-  const [won, setWon] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  useEffect(() => {
-    async function loadPuzzle() {
-      const response = await fetch("/api/today");
-      const data: Puzzle = await response.json();
-
-      const storageKey = `rankle-movies-${data.date}`;
-      const savedGame = localStorage.getItem(storageKey);
-
-      setPuzzle(data);
-
-      if (savedGame) {
-        const parsed: SavedGame = JSON.parse(savedGame);
-
-        const restoredMovies = parsed.movieOrder
-          .map((id) => data.movies.find((movie) => movie.id === id))
-          .filter((movie): movie is Movie => movie !== undefined);
-
-        setMovies(restoredMovies.length === 5 ? restoredMovies : data.movies);
-        setGuesses(parsed.guesses);
-        setMessage(parsed.message);
-        setGameOver(parsed.gameOver);
-        setWon(parsed.won);
-      } else {
-        setMovies(data.movies);
-      }
-
-      setLoaded(true);
-    }
-
-    loadPuzzle();
-  }, []);
-
-  useEffect(() => {
-    if (!puzzle || !loaded || movies.length !== 5) return;
-
-    const storageKey = `rankle-movies-${puzzle.date}`;
-
-    const savedGame: SavedGame = {
-      movieOrder: movies.map((movie) => movie.id),
-      guesses,
-      message,
-      gameOver,
-      won,
-    };
-
-    localStorage.setItem(storageKey, JSON.stringify(savedGame));
-  }, [puzzle, movies, guesses, message, gameOver, won, loaded]);
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id || gameOver) return;
-
-    setMovies((currentMovies) => {
-      const oldIndex = currentMovies.findIndex(
-        (movie) => movie.id === active.id
-      );
-      const newIndex = currentMovies.findIndex((movie) => movie.id === over.id);
-
-      return arrayMove(currentMovies, oldIndex, newIndex);
-    });
-  }
-
-  function checkGuess() {
-    if (!puzzle || gameOver) return;
-
-    const answerIds = puzzle.answer.map((movie) => movie.id);
-    const guessIds = movies.map((movie) => movie.id);
-
-    const feedback = guessIds.map((id, index) => {
-      const correctIndex = answerIds.indexOf(id);
-
-      if (correctIndex === index) return "🟩";
-      if (Math.abs(correctIndex - index) === 1) return "🟨";
-      return "⬛";
-    });
-
-    const newGuesses = [...guesses, feedback];
-    setGuesses(newGuesses);
-
-    const solved = feedback.every((square) => square === "🟩");
-
-    if (solved) {
-      setWon(true);
-      setGameOver(true);
-      setMessage(`Solved in ${newGuesses.length}/3. Nice work.`);
-      return;
-    }
-
-    if (newGuesses.length >= 3) {
-      setWon(false);
-      setGameOver(true);
-      setMessage("Game over. Here is the correct order.");
-
-      const orderedMovies = puzzle.answer
-        .map((answerMovie) =>
-          puzzle.movies.find((movie) => movie.id === answerMovie.id)
-        )
-        .filter((movie): movie is Movie => movie !== undefined);
-
-      setMovies(orderedMovies);
-      return;
-    }
-
-    setMessage("Not quite. Drag to reorder and try again.");
-  }
-
-  function resetToday() {
-    if (!puzzle) return;
-
-    localStorage.removeItem(`rankle-movies-${puzzle.date}`);
-    setMovies(puzzle.movies);
-    setGuesses([]);
-    setMessage("");
-    setGameOver(false);
-    setWon(false);
-  }
-
-  function shareResult() {
-    if (!puzzle) return;
-
-    const resultText = [
-      `🎬 Rankle Movies ${puzzle.date}`,
-      won ? `Solved in ${guesses.length}/3` : "Failed",
-      "",
-      ...guesses.map((row) => row.join("")),
-      "",
-      "Play at ranklegames.com",
-    ].join("\n");
-
-    navigator.clipboard.writeText(resultText);
-    setMessage("Result copied to clipboard.");
-  }
-
-  if (!puzzle) {
-    return (
-      <main className="min-h-screen bg-[#0b0f14] text-white">
-        <div className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-center">
-          <div>
-            <div className="mb-3 text-sm font-bold uppercase tracking-[0.35em] text-emerald-300">
-              Rankle Games
-            </div>
-            <h1 className="text-4xl font-black">Loading...</h1>
-            <p className="mt-3 text-zinc-400">Getting today&apos;s movies ready.</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
+export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#0b0f14] text-white">
       <div className="pointer-events-none fixed inset-0">
@@ -289,144 +32,53 @@ export default function Home() {
         <div className="absolute bottom-[-200px] right-[-120px] h-[420px] w-[420px] rounded-full bg-blue-500/10 blur-[130px]" />
       </div>
 
-      <div className="relative mx-auto max-w-xl px-5 py-6">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <div className="text-xs font-black uppercase tracking-[0.32em] text-emerald-300">
-              Rankle Games
-            </div>
-            <h1 className="mt-1 text-4xl font-black tracking-tight">
-              Rankle Movies
-            </h1>
+      <div className="relative mx-auto max-w-3xl px-5 py-10">
+        <header className="mb-10 text-center">
+          <div className="mb-3 text-sm font-black uppercase tracking-[0.35em] text-emerald-300">
+            Rankle Games
           </div>
 
-          <button
-            onClick={resetToday}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-bold text-zinc-400 transition hover:border-white/20 hover:text-white"
-          >
-            Reset
-          </button>
+          <h1 className="text-5xl font-black tracking-tight">
+            Pick Today&apos;s Challenge
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-xl text-zinc-400">
+            Daily ranking games featuring movies, video games, music, and more.
+            Sort the list, make your guesses, and share your score.
+          </p>
         </header>
 
-        <section className="mb-5 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl backdrop-blur-md">
-          <div className="text-center">
-            <div className="mx-auto mb-3 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
-              Daily Movie Sort
-            </div>
-
-            <p className="text-xl font-black leading-tight">
-              {puzzle.challenge}
-            </p>
-
-            <p className="mt-2 text-sm text-zinc-500">{puzzle.date}</p>
-
-            <div className="mt-5 grid grid-cols-3 gap-2 text-xs">
-              <div className="rounded-2xl bg-black/25 p-3">
-                <div className="text-lg">🟩</div>
-                <div className="mt-1 text-zinc-400">Correct</div>
-              </div>
-              <div className="rounded-2xl bg-black/25 p-3">
-                <div className="text-lg">🟨</div>
-                <div className="mt-1 text-zinc-400">Close</div>
-              </div>
-              <div className="rounded-2xl bg-black/25 p-3">
-                <div className="text-lg">⬛</div>
-                <div className="mt-1 text-zinc-400">Wrong area</div>
-              </div>
-            </div>
-
-            <p className="mt-4 text-sm text-zinc-400">
-              Drag the movies into order. You get{" "}
-              <span className="font-bold text-white">3 guesses</span>.
-            </p>
-          </div>
-        </section>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={movies.map((movie) => movie.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="mb-5 space-y-3">
-              {movies.map((movie, index) => (
-                <SortableMovieCard
-                  key={movie.id}
-                  movie={movie}
-                  index={index}
-                  gameOver={gameOver}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {!gameOver && (
-          <button
-            onClick={checkGuess}
-            className="w-full rounded-2xl bg-emerald-400 p-4 text-lg font-black text-black shadow-lg shadow-emerald-950/40 transition hover:bg-emerald-300 active:scale-[0.99]"
-          >
-            Submit Guess
-          </button>
-        )}
-
-        {message && (
-          <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-center text-sm font-bold text-zinc-200">
-            {message}
-          </p>
-        )}
-
-        {guesses.length > 0 && (
-          <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-black/25 p-4 text-center">
-            <h2 className="mb-3 text-xs font-black uppercase tracking-[0.28em] text-zinc-500">
-              Your Guesses
-            </h2>
-
-            <div className="space-y-2">
-              {guesses.map((guess, index) => (
-                <div key={index} className="text-2xl tracking-widest">
-                  {guess.join("")}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {gameOver && (
-          <div className="mt-5 rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-xl backdrop-blur-md">
-            <h2 className="mb-4 text-2xl font-black">Correct Order</h2>
-
-            <ol className="mb-5 space-y-2">
-              {puzzle.answer.map((movie, index) => (
-                <li
-                  key={movie.id}
-                  className="flex items-center justify-between rounded-2xl bg-black/25 p-3"
-                >
-                  <span className="min-w-0 pr-3">
-                    <span className="mr-2 text-zinc-500">{index + 1}.</span>
-                    <span className="font-bold">{movie.title}</span>
-                  </span>
-                  <span className="shrink-0 rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-black text-emerald-300">
-                    {movie.releaseDate.slice(0, 4)}
-                  </span>
-                </li>
-              ))}
-            </ol>
-
-            <button
-              onClick={shareResult}
-              className="w-full rounded-2xl bg-blue-500 p-4 font-black text-white shadow-lg shadow-blue-950/40 transition hover:bg-blue-400 active:scale-[0.99]"
+        <div className="grid gap-4">
+          {games.map((game) => (
+            <Link
+              key={game.href}
+              href={game.href}
+              className="group rounded-[2rem] border border-white/10 bg-white/[0.055] p-5 shadow-xl backdrop-blur-sm transition hover:border-emerald-400/30 hover:bg-white/[0.08]"
             >
-              Share Result
-            </button>
-          </div>
-        )}
+              <div className="flex items-center gap-5">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/10 text-3xl ring-1 ring-emerald-400/20">
+                  {game.emoji}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
+                    {game.label}
+                  </div>
+
+                  <h2 className="text-2xl font-black">{game.title}</h2>
+                  <p className="mt-1 text-zinc-400">{game.description}</p>
+                </div>
+
+                <div className="text-2xl text-zinc-600 transition group-hover:translate-x-1 group-hover:text-emerald-300">
+                  →
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
 
         <footer className="py-8 text-center text-xs text-zinc-600">
-          Movie data powered by TMDB. Rankle Games is not endorsed by TMDB.
+          New daily puzzles. More Rankle categories coming soon.
         </footer>
       </div>
     </main>
