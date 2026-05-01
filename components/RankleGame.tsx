@@ -42,11 +42,11 @@ type RanklePuzzle = {
 };
 
 type SavedGame = {
-  itemOrder: Array<number | string>;
-  guesses: string[][];
-  message: string;
-  gameOver: boolean;
-  won: boolean;
+  itemOrder?: Array<number | string>;
+  guesses?: string[][];
+  message?: string;
+  gameOver?: boolean;
+  won?: boolean;
 };
 
 type RankleGameProps = {
@@ -135,6 +135,7 @@ export default function RankleGame({
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -146,38 +147,68 @@ export default function RankleGame({
 
   useEffect(() => {
     async function loadPuzzle() {
-      const response = await fetch(apiPath);
-      const data: RanklePuzzle = await response.json();
+      try {
+        const response = await fetch(apiPath);
 
-      const storageKey = `${storagePrefix}-${data.date}`;
-      const savedGame = localStorage.getItem(storageKey);
+        if (!response.ok) {
+          throw new Error(`Failed to load puzzle from ${apiPath}`);
+        }
 
-      setPuzzle(data);
+        const data: RanklePuzzle = await response.json();
 
-      if (savedGame) {
-        const parsed: SavedGame = JSON.parse(savedGame);
+        if (!data.items || !Array.isArray(data.items)) {
+          throw new Error(`Puzzle data from ${apiPath} is missing items.`);
+        }
 
-        const restoredItems = parsed.itemOrder
-          .map((id) => data.items.find((item) => item.id === id))
-          .filter((item): item is RankleItem => item !== undefined);
+        if (!data.answer || !Array.isArray(data.answer)) {
+          throw new Error(`Puzzle data from ${apiPath} is missing answer.`);
+        }
 
-        setItems(restoredItems.length === 5 ? restoredItems : data.items);
-        setGuesses(parsed.guesses);
-        setMessage(parsed.message);
-        setGameOver(parsed.gameOver);
-        setWon(parsed.won);
-      } else {
-        setItems(data.items);
+        const storageKey = `${storagePrefix}-${data.date}`;
+        const savedGame = localStorage.getItem(storageKey);
+
+        setPuzzle(data);
+
+        if (savedGame) {
+          try {
+            const parsed: SavedGame = JSON.parse(savedGame);
+
+            const restoredItems = Array.isArray(parsed.itemOrder)
+              ? parsed.itemOrder
+                  .map((id) => data.items.find((item) => item.id === id))
+                  .filter((item): item is RankleItem => item !== undefined)
+              : [];
+
+            setItems(restoredItems.length === 5 ? restoredItems : data.items);
+            setGuesses(Array.isArray(parsed.guesses) ? parsed.guesses : []);
+            setMessage(parsed.message || "");
+            setGameOver(Boolean(parsed.gameOver));
+            setWon(Boolean(parsed.won));
+          } catch {
+            localStorage.removeItem(storageKey);
+            setItems(data.items);
+            setGuesses([]);
+            setMessage("");
+            setGameOver(false);
+            setWon(false);
+          }
+        } else {
+          setItems(data.items);
+        }
+
+        setLoaded(true);
+      } catch (error) {
+        console.error(error);
+        setLoadError("This game could not load. Please try again later.");
+        setLoaded(true);
       }
-
-      setLoaded(true);
     }
 
     loadPuzzle();
   }, [apiPath, storagePrefix]);
 
   useEffect(() => {
-    if (!puzzle || !loaded || items.length !== 5) return;
+    if (!puzzle || !loaded || items.length !== 5 || loadError) return;
 
     const storageKey = `${storagePrefix}-${puzzle.date}`;
 
@@ -190,7 +221,17 @@ export default function RankleGame({
     };
 
     localStorage.setItem(storageKey, JSON.stringify(savedGame));
-  }, [puzzle, items, guesses, message, gameOver, won, loaded, storagePrefix]);
+  }, [
+    puzzle,
+    items,
+    guesses,
+    message,
+    gameOver,
+    won,
+    loaded,
+    storagePrefix,
+    loadError,
+  ]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -276,7 +317,7 @@ export default function RankleGame({
     setMessage("Result copied to clipboard.");
   }
 
-  if (!puzzle) {
+  if (!loaded || (!puzzle && !loadError)) {
     return (
       <main className="min-h-screen bg-[#0b0f14] text-white">
         <div className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-center">
@@ -291,6 +332,33 @@ export default function RankleGame({
       </main>
     );
   }
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen bg-[#0b0f14] text-white">
+        <div className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-center">
+          <div>
+            <div className="mb-3 text-sm font-bold uppercase tracking-[0.35em] text-emerald-300">
+              Rankle Games
+            </div>
+
+            <h1 className="text-4xl font-black">Could Not Load</h1>
+
+            <p className="mt-4 text-zinc-400">{loadError}</p>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-6 rounded-2xl bg-emerald-400 px-5 py-3 font-black text-black"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!puzzle) return null;
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#0b0f14] text-white">
@@ -436,7 +504,8 @@ export default function RankleGame({
         )}
 
         <footer className="py-8 text-center text-xs text-zinc-600">
-          Data powered by public APIs. Rankle Games is a fan-made daily ranking game.
+          Data powered by public APIs. Rankle Games is a fan-made daily ranking
+          game.
         </footer>
       </div>
     </main>
