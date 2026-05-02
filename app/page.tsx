@@ -1,83 +1,104 @@
-import Link from "next/link";
+"use client";
 
-const games = [
-  {
-    title: "Rankle Movies",
-    description: "Sort 5 movies from oldest to newest.",
-    href: "/movies",
+import { useState } from "react";
+import RankleGame from "@/components/RankleGame";
+
+type CategoryKey = "movies" | "games" | "music";
+
+const categories = {
+  movies: {
+    name: "Movies",
     emoji: "🎬",
-    label: "Movies",
+    apiPath: "/api/movies/today",
+    storagePrefix: "rankle-movies",
+    accentLabel: "Daily Movie Sort",
+    theme: "movies" as const,
   },
-  {
-    title: "Rankle Video Games",
-    description: "Sort 5 video games from oldest to newest.",
-    href: "/games",
+  games: {
+    name: "Games",
     emoji: "🎮",
-    label: "Games",
+    apiPath: "/api/games/today",
+    storagePrefix: "rankle-video-games",
+    accentLabel: "Daily Video Game Sort",
+    theme: "games" as const,
   },
-  {
-    title: "Rankle Music",
-    description: "Sort songs or albums from oldest to newest.",
-    href: "/music",
+  music: {
+    name: "Music",
     emoji: "🎵",
-    label: "Music",
+    apiPath: "/api/music/today",
+    storagePrefix: "rankle-music",
+    accentLabel: "Daily Music Sort",
+    theme: "music" as const,
   },
-];
+};
 
 export default function HomePage() {
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryKey>("movies");
+
+  const selectedGame = categories[selectedCategory];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#0b0f14] text-white">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute left-1/2 top-[-180px] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-[120px]" />
-        <div className="absolute bottom-[-200px] right-[-120px] h-[420px] w-[420px] rounded-full bg-blue-500/10 blur-[130px]" />
-      </div>
+    <main className="min-h-screen bg-[#eef3ed] text-slate-900">
+      <div className="relative mx-auto max-w-7xl px-4 py-6 md:px-6">
+        <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec] px-6 py-6 shadow-lg shadow-slate-300/40">
+          <div className="text-center">
+            <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">
+              Daily Ranking Games
+            </div>
 
-      <div className="relative mx-auto max-w-3xl px-5 py-10">
-        <header className="mb-10 text-center">
-          <div className="mb-3 text-sm font-black uppercase tracking-[0.35em] text-emerald-300">
-            Rankle Games
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 md:text-6xl">
+              Rankle Games
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+              Pick a category, sort the list, and see how close you can get in
+              three guesses.
+            </p>
           </div>
-
-          <h1 className="text-5xl font-black tracking-tight">
-            Pick Today&apos;s Challenge
-          </h1>
-
-          <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-            Daily ranking games featuring movies, video games, music, and more.
-            Sort the list, make your guesses, and share your score.
-          </p>
         </header>
 
-        <div className="grid gap-4">
-          {games.map((game) => (
-            <Link
-              key={game.href}
-              href={game.href}
-              className="group rounded-[2rem] border border-white/10 bg-white/[0.055] p-5 shadow-xl backdrop-blur-sm transition hover:border-emerald-400/30 hover:bg-white/[0.08]"
-            >
-              <div className="flex items-center gap-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-400/10 text-3xl ring-1 ring-emerald-400/20">
-                  {game.emoji}
-                </div>
+        <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+          <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec] p-4 shadow-lg shadow-slate-300/40">
+            <h2 className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-slate-500">
+              Categories
+            </h2>
 
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
-                    {game.label}
-                  </div>
+            <nav className="space-y-3">
+              {(Object.keys(categories) as CategoryKey[]).map((key) => {
+                const category = categories[key];
+                const isActive = selectedCategory === key;
 
-                  <h2 className="text-2xl font-black">{game.title}</h2>
-                  <p className="mt-1 text-zinc-400">{game.description}</p>
-                </div>
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedCategory(key)}
+                    className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left text-lg font-bold transition ${
+                      isActive
+                        ? "border-emerald-500 bg-[#dfeee5] text-emerald-800"
+                        : "border-slate-300 bg-[#ece8df] text-slate-700 hover:border-emerald-500 hover:bg-[#dfeee5] hover:text-emerald-800"
+                    }`}
+                  >
+                    <span className="text-2xl">{category.emoji}</span>
+                    <span>{category.name}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
 
-                <div className="text-2xl text-zinc-600 transition group-hover:translate-x-1 group-hover:text-emerald-300">
-                  →
-                </div>
-              </div>
-            </Link>
-          ))}
+          <section className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec] p-5 shadow-lg shadow-slate-300/40">
+            <RankleGame
+              apiPath={selectedGame.apiPath}
+              storagePrefix={selectedGame.storagePrefix}
+              accentLabel={selectedGame.accentLabel}
+              theme={selectedGame.theme}
+              embedded
+            />
+          </section>
         </div>
 
-        <footer className="py-8 text-center text-xs text-zinc-600">
+        <footer className="py-8 text-center text-xs text-slate-500">
           New daily puzzles. More Rankle categories coming soon.
         </footer>
       </div>

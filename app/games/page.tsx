@@ -6,6 +6,7 @@ export default function GamesPage() {
       apiPath="/api/games/today"
       storagePrefix="rankle-video-games"
       accentLabel="Daily Video Game Sort"
+      theme="games"
     />
   );
 }

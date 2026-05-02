@@ -6,6 +6,7 @@ export default function MoviesPage() {
       apiPath="/api/movies/today"
       storagePrefix="rankle-movies"
       accentLabel="Daily Movie Sort"
+      theme="movies"
     />
   );
 }

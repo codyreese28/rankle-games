@@ -6,6 +6,7 @@ export default function MusicPage() {
       apiPath="/api/music/today"
       storagePrefix="rankle-music"
       accentLabel="Daily Music Sort"
+      theme="music"
     />
   );
 }
