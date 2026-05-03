@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import confetti from "canvas-confetti";
 import {
   closestCenter,
   DndContext,
@@ -339,6 +340,66 @@ export default function RankleGame({
     });
   }
 
+  function playWinConfetti() {
+    confetti({
+      particleCount: 140,
+      spread: 80,
+      origin: { y: 0.6 },
+    });
+
+    setTimeout(() => {
+      confetti({
+        particleCount: 90,
+        spread: 100,
+        origin: { y: 0.55 },
+      });
+    }, 250);
+  }
+
+  function playLoseSound() {
+    const AudioContextClass =
+      window.AudioContext || (window as any).webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
+
+    function playTone(
+      frequency: number,
+      startTime: number,
+      duration: number,
+      type: OscillatorType = "sine"
+    ) {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(
+        frequency,
+        audioContext.currentTime + startTime
+      );
+
+      gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime + startTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.22,
+        audioContext.currentTime + startTime + 0.03
+      );
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioContext.currentTime + startTime + duration
+      );
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.start(audioContext.currentTime + startTime);
+      oscillator.stop(audioContext.currentTime + startTime + duration);
+    }
+
+    playTone(180, 0, 0.35, "sawtooth");
+    playTone(125, 0.38, 0.45, "sawtooth");
+  }
+
   function checkGuess() {
     if (!puzzle || gameOver) return;
 
@@ -361,6 +422,7 @@ export default function RankleGame({
       setGameOver(true);
       setMessage(`Solved in ${newGuesses.length}/3. Nice work.`);
       setShowFinalModal(true);
+      playWinConfetti();
       return;
     }
 
@@ -369,6 +431,7 @@ export default function RankleGame({
       setGameOver(true);
       setMessage("Game over. Here is the correct order.");
       setShowFinalModal(true);
+      playLoseSound();
 
       const orderedItems = puzzle.answer
         .map((answerItem) =>
