@@ -39,9 +39,9 @@ export default function HomePage() {
   const selectedGame = categories[selectedCategory];
 
   return (
-    <main className="min-h-screen bg-[#eef3ed] text-slate-900">
+    <main className="min-h-screen bg-transparent text-slate-900">
       <div className="relative mx-auto max-w-7xl px-4 py-6 md:px-6">
-        <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec] px-6 py-6 shadow-lg shadow-slate-300/40">
+        <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 px-6 py-6 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
           <div className="text-center">
             <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">
               Daily Ranking Games
@@ -59,7 +59,7 @@ export default function HomePage() {
         </header>
 
         <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-          <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec] p-4 shadow-lg shadow-slate-300/40">
+          <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-4 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-slate-500">
               Categories
             </h2>
@@ -87,8 +87,9 @@ export default function HomePage() {
             </nav>
           </aside>
 
-          <section className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec] p-5 shadow-lg shadow-slate-300/40">
+          <section className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
             <RankleGame
+              key={selectedCategory}
               apiPath={selectedGame.apiPath}
               storagePrefix={selectedGame.storagePrefix}
               accentLabel={selectedGame.accentLabel}
