@@ -3,7 +3,7 @@
 import { useState } from "react";
 import RankleGame from "@/components/RankleGame";
 
-type CategoryKey = "movies" | "games" | "music";
+type CategoryKey = "movies" | "games" | "music" | "mystery";
 
 const categories = {
   movies: {
@@ -29,6 +29,14 @@ const categories = {
     storagePrefix: "rankle-music",
     accentLabel: "Daily Music Sort",
     theme: "music" as const,
+  },
+  mystery: {
+    name: "Mystery",
+    emoji: "❓",
+    apiPath: "/api/mystery/today",
+    storagePrefix: "rankle-mystery",
+    accentLabel: "Daily Mystery Sort",
+    theme: "mystery" as const,
   },
 };
 

@@ -21,8 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type ThemeName = "movies" | "games" | "music";
-
+type ThemeName = "movies" | "games" | "music" | "mystery";
 type RankleItem = {
   id: number | string;
   title: string;
@@ -128,6 +127,21 @@ const themes: Record<ThemeName, ThemeClasses> = {
     buttonText: "text-white",
     glow: "shadow-purple-200/50",
     arrowText: "group-hover:text-purple-700",
+  },
+    mystery: {
+    pageBg: "bg-[#f1efe8]",
+    panel: "bg-[#f8f3e8]",
+    card: "bg-[#eee5d5]",
+    cardHover: "hover:bg-[#e9dcc4]",
+    border: "border-slate-300",
+    accentText: "text-amber-800",
+    accentSoft: "bg-[#f2dfb5]",
+    accentPill: "bg-[#f8eac8]",
+    accentBorder: "border-amber-300",
+    button: "bg-amber-500 hover:bg-amber-400",
+    buttonText: "text-white",
+    glow: "shadow-amber-200/50",
+    arrowText: "group-hover:text-amber-700",
   },
 };
 
