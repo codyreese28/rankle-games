@@ -29,7 +29,9 @@ function shuffleWithSeed(array, seed) {
 
 async function getPuzzleFromEndpoint(endpoint) {
   try {
-    const response = await fetch(endpoint, { cache: "no-store" });
+    const response = await fetch(endpoint, {
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       return null;
@@ -41,17 +43,15 @@ async function getPuzzleFromEndpoint(endpoint) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   const today = getTodayDateKey();
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+  const origin = new URL(request.url).origin;
 
   const endpoints = [
-    `${baseUrl}/api/movies/today`,
-    `${baseUrl}/api/games/today`,
-    `${baseUrl}/api/music/today`,
+    `${origin}/api/movies/today`,
+    `${origin}/api/games/today`,
+    `${origin}/api/music/today`,
   ];
 
   const results = await Promise.all(
@@ -96,6 +96,7 @@ export async function GET() {
       {
         error: "Not enough items found for Mystery Rankle.",
         found: selectedItems.length,
+        loadedCategories: validResults.map((result) => result.gameType),
       },
       { status: 500 }
     );
