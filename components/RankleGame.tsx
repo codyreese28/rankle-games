@@ -555,62 +555,130 @@ export default function RankleGame({
 
   if (!puzzle) return null;
 
-  const finalModal = showFinalModal && puzzle && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  const finalScore =
+  guesses.length > 0 ? guesses[guesses.length - 1]?.[0] || "0/5 correct" : "0/5 correct";
+
+const finalModal = showFinalModal && puzzle && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+    <div
+      className={`max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-6 text-center shadow-2xl`}
+    >
       <div
-        className={`w-full max-w-md rounded-3xl border ${themeClasses.border} ${themeClasses.panel} p-6 text-center shadow-2xl`}
+        className={`mx-auto mb-4 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
       >
-        <div
-          className={`mx-auto mb-3 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-xs font-black ${themeClasses.accentText}`}
-        >
-          Final Results
-        </div>
+        Final Results
+      </div>
 
-        <h2 className="text-3xl font-black text-slate-950">
-          {won ? "You solved it!" : "Game over"}
-        </h2>
+      <h2 className="text-4xl font-black text-slate-950 md:text-5xl">
+        {won ? "You solved it!" : "Game over"}
+      </h2>
 
-        <p className="mt-3 text-sm font-bold text-slate-700">
-          {won
-            ? `Solved in ${guesses.length}/3 guesses.`
-            : "You used all 3 guesses."}
-        </p>
+      <p className="mt-3 text-base font-bold text-slate-700">
+        {won
+          ? `Solved in ${guesses.length}/3 guesses.`
+          : "You used all 3 guesses."}
+      </p>
 
-        <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
-          <h3 className="mb-3 text-sm font-black text-slate-700">
-            Guess History
-          </h3>
-
-          <div className="space-y-2">
-            {guesses.map((guess, index) => (
-              <div
-                key={index}
-                className={`rounded-xl ${themeClasses.panel} p-2 text-sm font-black text-slate-700`}
-              >
-                Guess {index + 1}: {guess[0]}
-              </div>
-            ))}
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Result
+          </div>
+          <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
+            {won ? "Win" : "Loss"}
           </div>
         </div>
 
-        <div className="mt-5 flex gap-3">
-          <button
-            onClick={() => setShowFinalModal(false)}
-            className={`w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            View Board
-          </button>
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Guesses
+          </div>
+          <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
+            {guesses.length}/3
+          </div>
+        </div>
 
-          <button
-            onClick={shareResult}
-            className={`w-full rounded-2xl ${themeClasses.button} p-3 font-black ${themeClasses.buttonText}`}
-          >
-            Share
-          </button>
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Final Score
+          </div>
+          <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
+            {finalScore.replace(" correct", "")}
+          </div>
         </div>
       </div>
+
+      <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
+        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
+          Guess History
+        </h3>
+
+        <div className="space-y-2">
+          {guesses.map((guess, index) => (
+            <div
+              key={index}
+              className={`flex items-center justify-between rounded-xl ${themeClasses.panel} p-3 text-sm font-black text-slate-700`}
+            >
+              <span>Guess {index + 1}</span>
+              <span className={themeClasses.accentText}>{guess[0]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4 text-left`}>
+        <h3 className="mb-3 text-center text-sm font-black uppercase tracking-[0.18em] text-slate-500">
+          Correct Order
+        </h3>
+
+        <ol className="space-y-2">
+          {puzzle.answer.map((item, index) => (
+            <li
+              key={item.id}
+              className={`flex items-center justify-between gap-3 rounded-xl ${themeClasses.panel} p-3 text-sm`}
+            >
+              <span className="min-w-0 font-bold text-slate-800">
+                <span className="mr-2 text-slate-500">{index + 1}.</span>
+                {item.title}
+              </span>
+
+              <span
+                className={`shrink-0 rounded-full ${themeClasses.accentPill} px-3 py-1 text-xs font-black ${themeClasses.accentText}`}
+              >
+                {item.releaseDate.slice(0, 4)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+          Next Puzzle
+        </div>
+        <div className={`mt-1 text-2xl font-black ${themeClasses.accentText}`}>
+          Tomorrow
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <button
+          onClick={() => setShowFinalModal(false)}
+          className={`rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 font-black text-slate-700 transition hover:text-slate-950`}
+        >
+          View Board
+        </button>
+
+        <button
+          onClick={shareResult}
+          className={`rounded-2xl ${themeClasses.button} p-4 font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+        >
+          Share Result
+        </button>
+      </div>
     </div>
-  );
+  </div>
+);
 
   const gameContent = (
     <div
