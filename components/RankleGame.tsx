@@ -234,6 +234,7 @@ export default function RankleGame({
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [showFinalModal, setShowFinalModal] = useState(false);
+  const [timeUntilNextPuzzle, setTimeUntilNextPuzzle] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -314,7 +315,41 @@ export default function RankleGame({
 
     loadPuzzle();
   }, [apiPath, storagePrefix]);
+  useEffect(() => {
+    function updateCountdown() {
+      const now = new Date();
 
+      const tomorrowUtc = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() + 1,
+          0,
+          0,
+          0
+        )
+      );
+
+      const diff = tomorrowUtc.getTime() - now.getTime();
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      setTimeUntilNextPuzzle(
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(seconds).padStart(2, "0")}`
+      );
+    }
+
+    updateCountdown();
+
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     if (!puzzle || !loaded || items.length !== 5 || loadError) return;
 
@@ -480,6 +515,8 @@ export default function RankleGame({
       won ? `Solved in ${guesses.length}/3` : "Failed",
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
+      "",
+      `Next puzzle in ${timeUntilNextPuzzle}`,
       "",
       "Play at ranklegames.com",
     ].join("\n");
@@ -657,7 +694,7 @@ const finalModal = showFinalModal && puzzle && (
           Next Puzzle
         </div>
         <div className={`mt-1 text-2xl font-black ${themeClasses.accentText}`}>
-          Tomorrow
+          {timeUntilNextPuzzle}
         </div>
       </div>
 
@@ -762,6 +799,16 @@ const finalModal = showFinalModal && puzzle && (
               You get{" "}
               <span className="font-black text-slate-950">3 guesses</span>.
             </p>
+
+            <div className={`mt-4 rounded-2xl ${themeClasses.card} p-4 text-center`}>
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                Next Puzzle
+              </div>
+
+              <div className={`mt-1 text-2xl font-black ${themeClasses.accentText}`}>
+                {timeUntilNextPuzzle}
+              </div>
+            </div>
           </div>
 
           <div className={`mb-5 rounded-2xl ${themeClasses.card} p-4 text-center`}>
