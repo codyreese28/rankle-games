@@ -182,7 +182,7 @@ export default function AboutPage() {
               Badges
             </div>
             <h2 className="mt-2 text-3xl font-black text-slate-950">
-              Achievements Coming Soon
+              Achievements
             </h2>
             <p className="mt-2 max-w-2xl text-slate-600">
               Badges will reward wins, streaks, and perfect solves once player
@@ -207,7 +207,7 @@ export default function AboutPage() {
                 </p>
 
                 <div className="mt-4 inline-flex rounded-full border border-slate-300 bg-[#f7f4ec] px-3 py-1 text-xs font-black text-slate-500">
-                  Coming Soon
+                  Available Now
                 </div>
               </div>
             ))}
