@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import RankleGame from "@/components/RankleGame";
 
 type CategoryKey = "movies" | "games" | "music" | "mystery";
@@ -63,6 +64,15 @@ export default function HomePage() {
               Pick a category, sort the list, and see how close you can get in
               three guesses.
             </p>
+
+            <div className="mt-5 flex justify-center">
+              <Link
+                href="/about"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+              >
+                How to Play
+              </Link>
+            </div>
           </div>
         </header>
 

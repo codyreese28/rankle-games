@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import {
   closestCenter,
@@ -49,6 +49,42 @@ type SavedGame = {
   message?: string;
   gameOver?: boolean;
   won?: boolean;
+};
+
+type AchievementStats = {
+  winsByTheme: {
+    movies: number;
+    games: number;
+    music: number;
+    mystery: number;
+  };
+  currentStreak: number;
+  bestStreak: number;
+  perfectGames: number;
+  lastWinDate?: string;
+};
+
+type Achievement = {
+  emoji: string;
+  name: string;
+  description: string;
+  unlocked: boolean;
+  progress: string;
+};
+
+type RankleStats = {
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  currentStreak: number;
+  bestStreak: number;
+  perfectGames: number;
+  guessDistribution: {
+    one: number;
+    two: number;
+    three: number;
+  };
+  lastPlayedDate?: string;
 };
 
 type RankleGameProps = {
@@ -234,6 +270,14 @@ export default function RankleGame({
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [showFinalModal, setShowFinalModal] = useState(false);
+  const [achievementStats, setAchievementStats] =
+    useState<AchievementStats | null>(null);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+  const [showAchievementUnlockedModal, setShowAchievementUnlockedModal] =
+    useState(false);
+  const [stats, setStats] = useState<RankleStats | null>(null);
+  const [showStatsModal, setShowStatsModal] = useState(false);
   const [timeUntilNextPuzzle, setTimeUntilNextPuzzle] = useState("");
 
   const sensors = useSensors(
@@ -449,6 +493,264 @@ export default function RankleGame({
     playTone(125, 0.38, 0.45, "sawtooth");
   }
 
+  const getDefaultStats = useCallback((): RankleStats => {
+    return {
+      gamesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      perfectGames: 0,
+      guessDistribution: {
+        one: 0,
+        two: 0,
+        three: 0,
+      },
+    };
+  }, []);
+
+  const getStatsKey = useCallback(() => {
+    return `${storagePrefix}-stats`;
+  }, [storagePrefix]);
+
+  function getDayDifference(previousDate: string, currentDate: string) {
+    const previous = new Date(`${previousDate}T00:00:00.000Z`);
+    const current = new Date(`${currentDate}T00:00:00.000Z`);
+
+    return Math.round(
+      (current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+
+  function getDefaultAchievementStats(): AchievementStats {
+    return {
+      winsByTheme: {
+        movies: 0,
+        games: 0,
+        music: 0,
+        mystery: 0,
+      },
+      currentStreak: 0,
+      bestStreak: 0,
+      perfectGames: 0,
+    };
+  }
+
+  function getAchievementStatsKey() {
+    return "rankle-achievements";
+  }
+
+  function loadAchievementStats() {
+    const savedStats = localStorage.getItem(getAchievementStatsKey());
+
+    if (!savedStats) {
+      const defaultStats = getDefaultAchievementStats();
+      setAchievementStats(defaultStats);
+      return defaultStats;
+    }
+
+    try {
+      const parsedStats = JSON.parse(savedStats) as AchievementStats;
+      setAchievementStats(parsedStats);
+      return parsedStats;
+    } catch {
+      const defaultStats = getDefaultAchievementStats();
+      localStorage.setItem(
+        getAchievementStatsKey(),
+        JSON.stringify(defaultStats)
+      );
+      setAchievementStats(defaultStats);
+      return defaultStats;
+    }
+  }
+
+  function recordAchievementWin(guessCount: number) {
+    if (!puzzle) return;
+
+    const currentStats = loadAchievementStats();
+    const beforeAchievements = getAchievements(currentStats);
+
+    const nextWinsByTheme = {
+      ...currentStats.winsByTheme,
+      [theme]: currentStats.winsByTheme[theme] + 1,
+    };
+
+    let nextCurrentStreak = currentStats.currentStreak;
+
+    if (!currentStats.lastWinDate) {
+      nextCurrentStreak = 1;
+    } else if (currentStats.lastWinDate === puzzle.date) {
+      nextCurrentStreak = currentStats.currentStreak;
+    } else {
+      const dayDifference = getDayDifference(
+        currentStats.lastWinDate,
+        puzzle.date
+      );
+
+      nextCurrentStreak =
+        dayDifference === 1 ? currentStats.currentStreak + 1 : 1;
+    }
+
+    const updatedStats: AchievementStats = {
+      winsByTheme: nextWinsByTheme,
+      currentStreak: nextCurrentStreak,
+      bestStreak: Math.max(currentStats.bestStreak, nextCurrentStreak),
+      perfectGames: currentStats.perfectGames + (guessCount === 1 ? 1 : 0),
+      lastWinDate: puzzle.date,
+    };
+
+    const afterAchievements = getAchievements(updatedStats);
+
+    const unlockedNow = afterAchievements.filter((afterAchievement) => {
+      const beforeAchievement = beforeAchievements.find(
+        (achievement) => achievement.name === afterAchievement.name
+      );
+
+      return afterAchievement.unlocked && !beforeAchievement?.unlocked;
+    });
+
+    localStorage.setItem(
+      getAchievementStatsKey(),
+      JSON.stringify(updatedStats)
+    );
+    setAchievementStats(updatedStats);
+
+    if (unlockedNow.length > 0) {
+      setNewAchievements(unlockedNow);
+      setShowAchievementUnlockedModal(true);
+    }
+  }
+
+  function getAchievements(statsData: AchievementStats | null): Achievement[] {
+    const stats = statsData || getDefaultAchievementStats();
+
+    return [
+      {
+        emoji: "🎬",
+        name: "Movie Buff",
+        description: "Win 5 Movie puzzles.",
+        unlocked: stats.winsByTheme.movies >= 5,
+        progress: `${Math.min(stats.winsByTheme.movies, 5)}/5`,
+      },
+      {
+        emoji: "🎮",
+        name: "Controller King",
+        description: "Win 5 Video Game puzzles.",
+        unlocked: stats.winsByTheme.games >= 5,
+        progress: `${Math.min(stats.winsByTheme.games, 5)}/5`,
+      },
+      {
+        emoji: "🎵",
+        name: "Album Expert",
+        description: "Win 5 Music puzzles.",
+        unlocked: stats.winsByTheme.music >= 5,
+        progress: `${Math.min(stats.winsByTheme.music, 5)}/5`,
+      },
+      {
+        emoji: "❓",
+        name: "Mystery Solver",
+        description: "Win a Mystery Rankle puzzle.",
+        unlocked: stats.winsByTheme.mystery >= 1,
+        progress: `${Math.min(stats.winsByTheme.mystery, 1)}/1`,
+      },
+      {
+        emoji: "🔥",
+        name: "Streak Master",
+        description: "Reach a 7-day winning streak.",
+        unlocked: stats.bestStreak >= 7,
+        progress: `${Math.min(stats.bestStreak, 7)}/7`,
+      },
+      {
+        emoji: "🏆",
+        name: "Perfect Rankler",
+        description: "Solve any puzzle in 1 guess.",
+        unlocked: stats.perfectGames >= 1,
+        progress: `${Math.min(stats.perfectGames, 1)}/1`,
+      },
+    ];
+  }
+
+  const loadStats = useCallback(() => {
+    const savedStats = localStorage.getItem(getStatsKey());
+
+    if (!savedStats) {
+      const defaultStats = getDefaultStats();
+      setStats(defaultStats);
+      return defaultStats;
+    }
+
+    try {
+      const parsedStats = JSON.parse(savedStats) as RankleStats;
+      setStats(parsedStats);
+      return parsedStats;
+    } catch {
+      const defaultStats = getDefaultStats();
+      localStorage.setItem(getStatsKey(), JSON.stringify(defaultStats));
+      setStats(defaultStats);
+      return defaultStats;
+    }
+  }, [getDefaultStats, getStatsKey]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStats();
+  }, [loadStats]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAchievementStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function recordGameResult(didWin: boolean, guessCount: number) {
+    if (!puzzle) return;
+
+    const currentStats = loadStats();
+
+    // Prevent the same daily puzzle from counting more than once.
+    if (currentStats.lastPlayedDate === puzzle.date) {
+      return;
+    }
+
+    let newCurrentStreak = currentStats.currentStreak;
+
+    if (didWin) {
+      const dayDifference = currentStats.lastPlayedDate
+        ? getDayDifference(currentStats.lastPlayedDate, puzzle.date)
+        : null;
+
+      newCurrentStreak =
+        dayDifference === 1 ? currentStats.currentStreak + 1 : 1;
+    } else {
+      newCurrentStreak = 0;
+    }
+
+    const updatedStats: RankleStats = {
+      gamesPlayed: currentStats.gamesPlayed + 1,
+      wins: currentStats.wins + (didWin ? 1 : 0),
+      losses: currentStats.losses + (didWin ? 0 : 1),
+      currentStreak: newCurrentStreak,
+      bestStreak: Math.max(currentStats.bestStreak, newCurrentStreak),
+      perfectGames:
+        currentStats.perfectGames + (didWin && guessCount === 1 ? 1 : 0),
+      guessDistribution: {
+        one:
+          currentStats.guessDistribution.one +
+          (didWin && guessCount === 1 ? 1 : 0),
+        two:
+          currentStats.guessDistribution.two +
+          (didWin && guessCount === 2 ? 1 : 0),
+        three:
+          currentStats.guessDistribution.three +
+          (didWin && guessCount === 3 ? 1 : 0),
+      },
+      lastPlayedDate: puzzle.date,
+    };
+
+    localStorage.setItem(getStatsKey(), JSON.stringify(updatedStats));
+    setStats(updatedStats);
+  }
+
   function checkGuess() {
     if (!puzzle || gameOver) return;
 
@@ -470,6 +772,8 @@ export default function RankleGame({
       setWon(true);
       setGameOver(true);
       setMessage(`Solved in ${newGuesses.length}/3. Nice work.`);
+      recordGameResult(true, newGuesses.length);
+      recordAchievementWin(newGuesses.length);
       setShowFinalModal(true);
       playWinConfetti();
       return;
@@ -479,6 +783,7 @@ export default function RankleGame({
       setWon(false);
       setGameOver(true);
       setMessage("Game over. Here is the correct order.");
+      recordGameResult(false, newGuesses.length);
       setShowFinalModal(true);
       playLoseSound();
 
@@ -717,6 +1022,201 @@ const finalModal = showFinalModal && puzzle && (
   </div>
 );
 
+const winRate =
+  stats && stats.gamesPlayed > 0
+    ? Math.round((stats.wins / stats.gamesPlayed) * 100)
+    : 0;
+
+const statsModal = showStatsModal && stats && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+    <div
+      className={`w-full max-w-lg rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-6 text-center shadow-2xl`}
+    >
+      <div
+        className={`mx-auto mb-4 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
+      >
+        Stats
+      </div>
+
+      <h2 className="text-4xl font-black text-slate-950">Your Stats</h2>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className={`text-3xl font-black ${themeClasses.accentText}`}>
+            {stats.gamesPlayed}
+          </div>
+          <div className="mt-1 text-xs font-bold text-slate-500">Played</div>
+        </div>
+
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className={`text-3xl font-black ${themeClasses.accentText}`}>
+            {winRate}%
+          </div>
+          <div className="mt-1 text-xs font-bold text-slate-500">Win Rate</div>
+        </div>
+
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className={`text-3xl font-black ${themeClasses.accentText}`}>
+            {stats.currentStreak}
+          </div>
+          <div className="mt-1 text-xs font-bold text-slate-500">
+            Current Streak
+          </div>
+        </div>
+
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className={`text-3xl font-black ${themeClasses.accentText}`}>
+            {stats.bestStreak}
+          </div>
+          <div className="mt-1 text-xs font-bold text-slate-500">
+            Best Streak
+          </div>
+        </div>
+      </div>
+
+      <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
+        <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
+          Guess Distribution
+        </h3>
+
+        <div className="space-y-2 text-left">
+          <div className={`rounded-xl ${themeClasses.panel} p-3 font-black`}>
+            1 Guess: {stats.guessDistribution.one}
+          </div>
+
+          <div className={`rounded-xl ${themeClasses.panel} p-3 font-black`}>
+            2 Guesses: {stats.guessDistribution.two}
+          </div>
+
+          <div className={`rounded-xl ${themeClasses.panel} p-3 font-black`}>
+            3 Guesses: {stats.guessDistribution.three}
+          </div>
+        </div>
+      </div>
+
+      <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
+        <div className="text-sm font-bold text-slate-700">
+          Perfect Games:{" "}
+          <span className={themeClasses.accentText}>{stats.perfectGames}</span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => setShowStatsModal(false)}
+        className={`mt-6 w-full rounded-2xl ${themeClasses.button} p-4 font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+);
+
+const achievements = getAchievements(achievementStats);
+
+const achievementsModal = showAchievementsModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+    <div
+      className={`max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-6 text-center shadow-2xl`}
+    >
+      <div
+        className={`mx-auto mb-4 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
+      >
+        Achievements
+      </div>
+
+      <h2 className="text-4xl font-black text-slate-950">Your Badges</h2>
+
+      <p className="mx-auto mt-3 max-w-xl text-sm font-semibold text-slate-600">
+        Unlock badges by winning puzzles, building streaks, and solving games
+        perfectly.
+      </p>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {achievements.map((achievement) => (
+          <div
+            key={achievement.name}
+            className={`rounded-2xl border ${themeClasses.border} ${
+              achievement.unlocked ? themeClasses.accentPill : themeClasses.card
+            } p-5 text-center`}
+          >
+            <div className="text-5xl">
+              {achievement.unlocked ? achievement.emoji : "🔒"}
+            </div>
+
+            <h3 className="mt-3 text-xl font-black text-slate-950">
+              {achievement.name}
+            </h3>
+
+            <p className="mt-2 text-sm font-semibold text-slate-600">
+              {achievement.description}
+            </p>
+
+            <div
+              className={`mt-4 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.panel} px-3 py-1 text-xs font-black ${themeClasses.accentText}`}
+            >
+              {achievement.unlocked
+                ? "Unlocked"
+                : `Progress ${achievement.progress}`}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setShowAchievementsModal(false)}
+        className={`mt-6 w-full rounded-2xl ${themeClasses.button} p-4 font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+);
+
+const achievementUnlockedModal =
+  showAchievementUnlockedModal &&
+  newAchievements.length > 0 && (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+      <div
+        className={`w-full max-w-md rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-6 text-center shadow-2xl`}
+      >
+        <div
+          className={`mx-auto mb-4 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
+        >
+          Achievement Unlocked
+        </div>
+
+        <div className="space-y-4">
+          {newAchievements.map((achievement) => (
+            <div
+              key={achievement.name}
+              className={`rounded-2xl border ${themeClasses.accentBorder} ${themeClasses.accentPill} p-5`}
+            >
+              <div className="text-6xl">{achievement.emoji}</div>
+
+              <h2 className="mt-3 text-3xl font-black text-slate-950">
+                {achievement.name}
+              </h2>
+
+              <p className="mt-2 text-sm font-bold text-slate-700">
+                {achievement.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => {
+            setShowAchievementUnlockedModal(false);
+            setNewAchievements([]);
+          }}
+          className={`mt-6 w-full rounded-2xl ${themeClasses.button} p-4 font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+        >
+          Awesome
+        </button>
+      </div>
+    </div>
+  );
+
   const gameContent = (
     <div
       className={
@@ -836,6 +1336,20 @@ const finalModal = showFinalModal && puzzle && (
             Reset
           </button>
 
+          <button
+            onClick={() => setShowAchievementsModal(true)}
+            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
+          >
+            Achievements
+          </button>
+
+          <button
+            onClick={() => setShowStatsModal(true)}
+            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
+          >
+            View Stats
+          </button>
+
           {message && (
             <p
               className={`mt-4 rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-center text-sm font-bold text-slate-700`}
@@ -919,6 +1433,9 @@ const finalModal = showFinalModal && puzzle && (
       <div className="text-slate-900">
         {gameContent}
         {finalModal}
+        {achievementsModal}
+        {achievementUnlockedModal}
+        {statsModal}
       </div>
     );
   }
@@ -929,6 +1446,9 @@ const finalModal = showFinalModal && puzzle && (
     >
       {gameContent}
       {finalModal}
+      {achievementsModal}
+      {achievementUnlockedModal}
+      {statsModal}
     </main>
   );
 }
