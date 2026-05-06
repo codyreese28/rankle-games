@@ -47,7 +47,7 @@ const dailyChallenge = {
   emoji: "🌟",
   apiPath: "/api/daily-challenge/today",
   storagePrefix: "rankle-daily-challenge",
-  accentLabel: "Daily Featured Mix",
+  accentLabel: "Hard Daily Mix",
   theme: "mystery" as const,
 };
 
@@ -115,12 +115,12 @@ export default function HomePage() {
               </div>
 
               <h2 className="mt-3 text-3xl font-black text-slate-950 md:text-4xl">
-                🌟 Daily Challenge
+                🌟 Hard Daily Challenge
               </h2>
 
               <p className="mt-2 max-w-2xl text-sm font-bold text-slate-600 md:text-base">
-                A separate mixed puzzle using movies, video games, and music.
-                This is not the Mystery category — it has its own daily board.
+                A separate hard mixed puzzle using movies, video games, and
+                music. No category hints are shown.
               </p>
             </div>
 
@@ -132,18 +132,20 @@ export default function HomePage() {
                   : "bg-amber-500 text-white hover:bg-amber-400"
               }`}
             >
-              {isDailySelected ? "Daily Challenge Selected" : "Play Daily Challenge"}
+              {isDailySelected
+                ? "Daily Challenge Selected"
+                : "Play Daily Challenge"}
             </button>
           </div>
         </section>
 
-        <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
           <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-4 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-slate-500">
               Categories
             </h2>
 
-            <nav className="space-y-3">
+            <nav className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:block xl:space-y-3">
               {categoryKeys.map((key) => {
                 const category = categories[key];
                 const isActive = selectedGameKey === key;
