@@ -212,42 +212,32 @@ function SortableCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group rounded-2xl border ${themeClasses.border} ${themeClasses.card} ${themeClasses.cardHover} p-3 shadow-md shadow-slate-300/40 transition ${
+      className={`group flex items-center gap-4 rounded-3xl border ${themeClasses.border} bg-white/70 px-4 py-3 shadow-sm transition ${
         gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
       }`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-4">
-          <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${themeClasses.accentSoft} text-sm font-black ${themeClasses.accentText} ring-1 ${themeClasses.accentBorder}`}
-          >
-            {index + 1}
-          </div>
-
-          <img
-            src={item.image}
-            alt={item.title}
-            className="h-[76px] w-14 shrink-0 rounded-xl object-cover shadow-md ring-1 ring-slate-300"
-          />
-
-          <div className="min-w-0">
-            <div className="truncate text-base font-black text-slate-950">
-              {item.title}
-            </div>
-            <div className="mt-1 text-xs font-semibold text-slate-500">
-              {gameOver ? "Locked" : "Drag to reorder"}
-            </div>
-          </div>
-        </div>
-
-        {!gameOver && (
-          <div
-            className={`rounded-xl border ${themeClasses.border} ${themeClasses.panel} px-3 py-2 text-slate-500 transition ${themeClasses.arrowText}`}
-          >
-            ☰
-          </div>
-        )}
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-[#f7f4ec] text-base font-black text-slate-700">
+        {index + 1}
       </div>
+
+      <img
+        src={item.image}
+        alt={item.title}
+        className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover"
+      />
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-lg font-black text-slate-900">
+          {item.title}
+        </div>
+        <div className="text-xs font-semibold text-slate-500">
+          {gameOver ? "Locked" : "Drag to reorder"}
+        </div>
+      </div>
+
+      {!gameOver && (
+        <div className="text-xl font-black text-slate-400">{"\u2261"}</div>
+      )}
     </div>
   );
 }
@@ -497,20 +487,6 @@ export default function RankleGame({
 
     playTone(180, 0, 0.35, "sawtooth");
     playTone(125, 0.38, 0.45, "sawtooth");
-  }
-
-  function toggleSound() {
-    const nextValue = !soundEnabled;
-
-    setSoundEnabled(nextValue);
-    localStorage.setItem("rankle-sound-enabled", String(nextValue));
-  }
-
-  function toggleAnimations() {
-    const nextValue = !animationsEnabled;
-
-    setAnimationsEnabled(nextValue);
-    localStorage.setItem("rankle-animations-enabled", String(nextValue));
   }
 
   const getDefaultStats = useCallback((): RankleStats => {
@@ -1324,39 +1300,41 @@ const achievementUnlockedModal =
   const gameContent = (
     <div
       className={
-        embedded ? "w-full" : "relative mx-auto max-w-6xl px-5 py-6"
+        embedded ? "w-full" : "relative mx-auto max-w-7xl px-5 py-6"
       }
     >
       <header
-        className={`mb-5 rounded-3xl border ${themeClasses.border} ${themeClasses.panel} px-5 py-4 text-center shadow-lg ${themeClasses.glow}`}
+        className={`mb-5 rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 text-center shadow-[0_10px_30px_rgba(15,23,42,0.08)]`}
       >
         <div
-          className={`text-xs font-black uppercase tracking-[0.32em] ${themeClasses.accentText}`}
+          className="text-xs font-black uppercase tracking-[0.35em] text-slate-700"
         >
           Rankle Games
         </div>
-        <h1 className="mt-1 text-4xl font-black tracking-tight text-slate-950">
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">
           {puzzle.title}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">{puzzle.date}</p>
+        <p className="mt-2 text-sm font-semibold text-slate-500">
+          {puzzle.date}
+        </p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_420px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_380px] lg:items-start">
         <section
-          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-lg ${themeClasses.glow}`}
+          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)]`}
         >
           <div className="mb-4">
             <div
-              className={`inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-xs font-bold ${themeClasses.accentText}`}
+              className={`inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
             >
               {accentLabel}
             </div>
 
-            <h2 className="mt-3 text-2xl font-black text-slate-950">
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900">
               Arrange the list
             </h2>
 
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm font-semibold text-slate-600">
               Drag the five items from oldest to newest.
             </p>
           </div>
@@ -1386,40 +1364,40 @@ const achievementUnlockedModal =
         </section>
 
         <aside
-          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-lg ${themeClasses.glow}`}
+          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)]`}
         >
-          <div className="mb-5 text-center">
+          <div className="mb-5">
             <div
-              className={`mx-auto mb-3 inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-xs font-bold ${themeClasses.accentText}`}
+              className={`inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
             >
               How to Play
             </div>
 
-            <p className="text-xl font-black leading-tight text-slate-950">
+            <h3 className="mt-3 text-2xl font-black text-slate-900">
               {puzzle.challenge}
-            </p>
+            </h3>
 
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm font-semibold text-slate-600">
               You get{" "}
-              <span className="font-black text-slate-950">3 guesses</span>.
+              <span className="font-black text-slate-900">3 guesses</span>.
             </p>
 
-            <div className={`mt-4 rounded-2xl ${themeClasses.card} p-4 text-center`}>
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            <div className="mt-5 rounded-3xl border border-slate-200 bg-white/60 p-4 text-center">
+              <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
                 Next Puzzle
               </div>
 
-              <div className={`mt-1 text-2xl font-black ${themeClasses.accentText}`}>
+              <div className="mt-2 text-4xl font-black tracking-tight text-slate-900">
                 {timeUntilNextPuzzle}
               </div>
             </div>
           </div>
 
-          <div className={`mb-5 rounded-2xl ${themeClasses.card} p-4 text-center`}>
-            <div className="text-sm font-bold text-slate-700">
+          <div className="mb-5 rounded-3xl border border-slate-200 bg-white/60 p-4 text-center">
+            <div className="text-sm font-semibold text-slate-600">
               After each guess, you will only see how many are correct.
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
               Correct positions are not revealed.
             </div>
           </div>
@@ -1427,32 +1405,11 @@ const achievementUnlockedModal =
           {!gameOver && (
             <button
               onClick={checkGuess}
-              className={`w-full rounded-2xl ${themeClasses.button} p-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+              className={`w-full rounded-2xl ${themeClasses.button} px-5 py-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
             >
               Submit Guess
             </button>
           )}
-
-          <button
-            onClick={resetToday}
-            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            Reset
-          </button>
-
-          <button
-            onClick={toggleSound}
-            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            Sound: {soundEnabled ? "On" : "Off"}
-          </button>
-
-          <button
-            onClick={toggleAnimations}
-            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            Animations: {animationsEnabled ? "On" : "Off"}
-          </button>
 
           <a
             href="https://forms.gle/GdFPKPXEg82JywGZ9"
@@ -1468,13 +1425,6 @@ const achievementUnlockedModal =
             className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
           >
             Achievements
-          </button>
-
-          <button
-            onClick={() => setShowStatsModal(true)}
-            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            View Stats
           </button>
 
           {message && (

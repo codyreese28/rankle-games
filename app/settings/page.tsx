@@ -18,6 +18,7 @@ export default function SettingsPage() {
 
   function toggleSound() {
     const nextValue = !soundEnabled;
+
     setSoundEnabled(nextValue);
     localStorage.setItem("rankle-sound-enabled", String(nextValue));
     setMessage(`Sound turned ${nextValue ? "on" : "off"}.`);
@@ -25,9 +26,38 @@ export default function SettingsPage() {
 
   function toggleAnimations() {
     const nextValue = !animationsEnabled;
+
     setAnimationsEnabled(nextValue);
     localStorage.setItem("rankle-animations-enabled", String(nextValue));
     setMessage(`Animations turned ${nextValue ? "on" : "off"}.`);
+  }
+
+  function resetDailyGameProgress() {
+    const confirmed = window.confirm(
+      "Reset saved daily game progress on this device? This will not reset achievements."
+    );
+
+    if (!confirmed) return;
+
+    const keysToRemove: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+
+      if (
+        key &&
+        key.startsWith("rankle-") &&
+        key !== "rankle-achievements" &&
+        key !== "rankle-sound-enabled" &&
+        key !== "rankle-animations-enabled"
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    setMessage("Saved daily game progress has been reset.");
   }
 
   function resetAchievements() {
@@ -123,7 +153,8 @@ export default function SettingsPage() {
             </h2>
 
             <p className="mt-2 text-slate-600">
-              These settings affect the game on this browser and device.
+              These settings control sound and animation effects during the
+              game.
             </p>
           </div>
 
@@ -154,7 +185,7 @@ export default function SettingsPage() {
                   Animations
                 </h3>
                 <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Controls win confetti and visual celebration effects.
+                  Controls win confetti and celebration effects.
                 </p>
               </div>
 
@@ -213,7 +244,14 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <button
+              onClick={resetDailyGameProgress}
+              className="rounded-2xl border border-red-300 bg-white/70 px-5 py-3 font-black text-red-700 transition hover:bg-red-50 active:scale-[0.99]"
+            >
+              Reset Game Progress
+            </button>
+
             <button
               onClick={resetAchievements}
               className="rounded-2xl border border-red-300 bg-white/70 px-5 py-3 font-black text-red-700 transition hover:bg-red-50 active:scale-[0.99]"
