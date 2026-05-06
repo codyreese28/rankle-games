@@ -828,11 +828,33 @@ export default function RankleGame({
     setShowFinalModal(false);
   }
 
+  function getPuzzleNumber() {
+    if (!puzzle) return 1;
+
+    const launchDate = new Date("2026-05-06T00:00:00.000Z");
+    const puzzleDate = new Date(`${puzzle.date}T00:00:00.000Z`);
+
+    const differenceInDays = Math.floor(
+      (puzzleDate.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    return Math.max(differenceInDays + 1, 1);
+  }
+
+  function getGameEmoji() {
+    if (theme === "movies") return "\u{1F3AC}";
+    if (theme === "games") return "\u{1F3AE}";
+    if (theme === "music") return "\u{1F3B5}";
+    if (theme === "mystery") return "\u2753";
+
+    return "\u{1F3C6}";
+  }
+
   function shareResult() {
     if (!puzzle) return;
 
     const resultText = [
-      `${puzzle.title} ${puzzle.date}`,
+      `${getGameEmoji()} ${puzzle.title} #${getPuzzleNumber()}`,
       won ? `Solved in ${guesses.length}/3` : "Failed",
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
@@ -977,6 +999,8 @@ export default function RankleGame({
 
   if (!puzzle) return null;
 
+  const puzzleNumber = getPuzzleNumber();
+
   const finalScore =
   guesses.length > 0 ? guesses[guesses.length - 1]?.[0] || "0/5 correct" : "0/5 correct";
 
@@ -996,6 +1020,10 @@ const finalModal = showFinalModal && puzzle && (
       </h2>
 
       <p className="mt-3 text-base font-bold text-slate-700">
+        {puzzle.title} #{puzzleNumber}
+      </p>
+
+      <p className="mt-1 text-sm font-bold text-slate-600">
         {won
           ? `Solved in ${guesses.length}/3 guesses.`
           : "You used all 3 guesses."}
@@ -1312,7 +1340,7 @@ const achievementUnlockedModal =
           Rankle Games
         </div>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">
-          {puzzle.title}
+          {puzzle.title} #{puzzleNumber}
         </h1>
         <p className="mt-2 text-sm font-semibold text-slate-500">
           {puzzle.date}
