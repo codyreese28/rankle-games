@@ -5,6 +5,7 @@ import Link from "next/link";
 import RankleGame from "@/components/RankleGame";
 
 type CategoryKey = "movies" | "games" | "music" | "mystery";
+type SelectedGameKey = CategoryKey | "dailyChallenge";
 
 const categories = {
   movies: {
@@ -41,11 +42,27 @@ const categories = {
   },
 };
 
-export default function HomePage() {
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryKey>("movies");
+const dailyChallenge = {
+  name: "Daily Challenge",
+  emoji: "🌟",
+  apiPath: "/api/daily-challenge/today",
+  storagePrefix: "rankle-daily-challenge",
+  accentLabel: "Daily Featured Mix",
+  theme: "mystery" as const,
+};
 
-  const selectedGame = categories[selectedCategory];
+export default function HomePage() {
+  const [selectedGameKey, setSelectedGameKey] =
+    useState<SelectedGameKey>("movies");
+
+  const categoryKeys = Object.keys(categories) as CategoryKey[];
+
+  const selectedGame =
+    selectedGameKey === "dailyChallenge"
+      ? dailyChallenge
+      : categories[selectedGameKey];
+
+  const isDailySelected = selectedGameKey === "dailyChallenge";
 
   return (
     <main className="min-h-screen bg-transparent text-slate-900">
@@ -90,6 +107,36 @@ export default function HomePage() {
           </div>
         </header>
 
+        <section className="mb-6 overflow-hidden rounded-3xl border border-amber-300/70 bg-gradient-to-br from-amber-100/95 via-[#f7f4ec]/95 to-purple-100/95 p-5 shadow-lg shadow-amber-200/40 backdrop-blur-sm">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <div className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-black uppercase tracking-[0.25em] text-amber-800">
+                Today&apos;s Featured Challenge
+              </div>
+
+              <h2 className="mt-3 text-3xl font-black text-slate-950 md:text-4xl">
+                🌟 Daily Challenge
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm font-bold text-slate-600 md:text-base">
+                A separate mixed puzzle using movies, video games, and music.
+                This is not the Mystery category — it has its own daily board.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setSelectedGameKey("dailyChallenge")}
+              className={`rounded-2xl px-6 py-4 text-sm font-black shadow-lg transition active:scale-[0.99] ${
+                isDailySelected
+                  ? "bg-slate-900 text-white"
+                  : "bg-amber-500 text-white hover:bg-amber-400"
+              }`}
+            >
+              {isDailySelected ? "Daily Challenge Selected" : "Play Daily Challenge"}
+            </button>
+          </div>
+        </section>
+
         <div className="grid gap-6 md:grid-cols-[220px_1fr]">
           <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-4 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
             <h2 className="mb-4 text-sm font-black uppercase tracking-[0.25em] text-slate-500">
@@ -97,14 +144,14 @@ export default function HomePage() {
             </h2>
 
             <nav className="space-y-3">
-              {(Object.keys(categories) as CategoryKey[]).map((key) => {
+              {categoryKeys.map((key) => {
                 const category = categories[key];
-                const isActive = selectedCategory === key;
+                const isActive = selectedGameKey === key;
 
                 return (
                   <button
                     key={key}
-                    onClick={() => setSelectedCategory(key)}
+                    onClick={() => setSelectedGameKey(key)}
                     className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left text-lg font-bold transition ${
                       isActive
                         ? "border-emerald-500 bg-[#dfeee5] text-emerald-800"
@@ -121,7 +168,7 @@ export default function HomePage() {
 
           <section className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
             <RankleGame
-              key={selectedCategory}
+              key={selectedGameKey}
               apiPath={selectedGame.apiPath}
               storagePrefix={selectedGame.storagePrefix}
               accentLabel={selectedGame.accentLabel}
