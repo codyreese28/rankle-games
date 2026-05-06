@@ -57,6 +57,7 @@ type AchievementStats = {
     games: number;
     music: number;
     mystery: number;
+    dailyChallenge: number;
   };
   currentStreak: number;
   bestStreak: number;
@@ -116,6 +117,7 @@ type SortableCardProps = {
   index: number;
   gameOver: boolean;
   themeClasses: ThemeClasses;
+  animationsEnabled: boolean;
 };
 
 const themes: Record<ThemeName, ThemeClasses> = {
@@ -186,6 +188,7 @@ function SortableCard({
   index,
   gameOver,
   themeClasses,
+  animationsEnabled,
 }: SortableCardProps) {
   const {
     attributes,
@@ -202,8 +205,9 @@ function SortableCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.75 : 1,
+    opacity: isDragging ? 0.75 : undefined,
     scale: isDragging ? "1.02" : "1",
+    animationDelay: animationsEnabled ? `${index * 90}ms` : undefined,
   };
 
   return (
@@ -213,6 +217,8 @@ function SortableCard({
       {...attributes}
       {...listeners}
       className={`group flex items-center gap-4 rounded-3xl border ${themeClasses.border} bg-white/70 px-4 py-3 shadow-sm transition ${
+        animationsEnabled ? "animate-rankle-card-reveal opacity-0" : ""
+      } ${
         gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
       }`}
     >
@@ -525,6 +531,7 @@ export default function RankleGame({
         games: 0,
         music: 0,
         mystery: 0,
+        dailyChallenge: 0,
       },
       currentStreak: 0,
       bestStreak: 0,
@@ -534,6 +541,14 @@ export default function RankleGame({
 
   function getAchievementStatsKey() {
     return "rankle-achievements";
+  }
+
+  function getAchievementCategoryKey() {
+    if (storagePrefix === "rankle-daily-challenge") {
+      return "dailyChallenge";
+    }
+
+    return theme;
   }
 
   function loadAchievementStats() {
@@ -547,8 +562,27 @@ export default function RankleGame({
 
     try {
       const parsedStats = JSON.parse(savedStats) as AchievementStats;
-      setAchievementStats(parsedStats);
-      return parsedStats;
+      const defaultStats = getDefaultAchievementStats();
+      const normalizedStats: AchievementStats = {
+        ...defaultStats,
+        ...parsedStats,
+        winsByTheme: {
+          ...defaultStats.winsByTheme,
+          ...parsedStats.winsByTheme,
+        },
+      };
+
+      if (
+        JSON.stringify(normalizedStats) !== JSON.stringify(parsedStats)
+      ) {
+        localStorage.setItem(
+          getAchievementStatsKey(),
+          JSON.stringify(normalizedStats)
+        );
+      }
+
+      setAchievementStats(normalizedStats);
+      return normalizedStats;
     } catch {
       const defaultStats = getDefaultAchievementStats();
       localStorage.setItem(
@@ -566,9 +600,12 @@ export default function RankleGame({
     const currentStats = loadAchievementStats();
     const beforeAchievements = getAchievements(currentStats);
 
+    const achievementCategoryKey = getAchievementCategoryKey();
+
     const nextWinsByTheme = {
       ...currentStats.winsByTheme,
-      [theme]: currentStats.winsByTheme[theme] + 1,
+      [achievementCategoryKey]:
+        currentStats.winsByTheme[achievementCategoryKey] + 1,
     };
 
     let nextCurrentStreak = currentStats.currentStreak;
@@ -648,6 +685,27 @@ export default function RankleGame({
         description: "Win a Mystery Rankle puzzle.",
         unlocked: stats.winsByTheme.mystery >= 1,
         progress: `${Math.min(stats.winsByTheme.mystery, 1)}/1`,
+      },
+      {
+        emoji: "\u{1F31F}",
+        name: "Daily Challenger",
+        description: "Win your first Hard Daily Challenge.",
+        unlocked: stats.winsByTheme.dailyChallenge >= 1,
+        progress: `${Math.min(stats.winsByTheme.dailyChallenge, 1)}/1`,
+      },
+      {
+        emoji: "\u{1F9E0}",
+        name: "No Hints Needed",
+        description: "Win 5 Hard Daily Challenges.",
+        unlocked: stats.winsByTheme.dailyChallenge >= 5,
+        progress: `${Math.min(stats.winsByTheme.dailyChallenge, 5)}/5`,
+      },
+      {
+        emoji: "\u{1F480}",
+        name: "Hard Mode Hero",
+        description: "Win 10 Hard Daily Challenges.",
+        unlocked: stats.winsByTheme.dailyChallenge >= 10,
+        progress: `${Math.min(stats.winsByTheme.dailyChallenge, 10)}/10`,
       },
       {
         emoji: "🔥",
@@ -850,18 +908,41 @@ export default function RankleGame({
     return "\u{1F3C6}";
   }
 
+  function getDidYouKnowFact() {
+    if (!puzzle || !puzzle.answer || puzzle.answer.length === 0) {
+      return null;
+    }
+
+    const oldestItem = puzzle.answer[0];
+    const newestItem = puzzle.answer[puzzle.answer.length - 1];
+
+    const oldestYear = oldestItem.releaseDate.slice(0, 4);
+    const newestYear = newestItem.releaseDate.slice(0, 4);
+
+    if (oldestItem.id === newestItem.id) {
+      return `Today's item was released in ${oldestYear}.`;
+    }
+
+    return `The oldest item today was ${oldestItem.title} from ${oldestYear}. The newest item was ${newestItem.title} from ${newestYear}.`;
+  }
+
   function shareResult() {
     if (!puzzle) return;
 
+    const puzzleNumber = getPuzzleNumber();
+    const didYouKnowFact = getDidYouKnowFact();
+
     const resultText = [
-      `${getGameEmoji()} ${puzzle.title} #${getPuzzleNumber()}`,
-      won ? `Solved in ${guesses.length}/3` : "Failed",
+      `${getGameEmoji()} ${puzzle.title} #${puzzleNumber}`,
+      won ? `✅ Solved in ${guesses.length}/3` : "❌ Failed",
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
       "",
+      ...(didYouKnowFact ? [`Did you know? ${didYouKnowFact}`, ""] : []),
       `Next puzzle in ${timeUntilNextPuzzle}`,
       "",
-      "Play at ranklegames.com",
+      "Play Rankle Games:",
+      "https://ranklegames.com",
     ].join("\n");
 
     navigator.clipboard.writeText(resultText);
@@ -1000,6 +1081,7 @@ export default function RankleGame({
   if (!puzzle) return null;
 
   const puzzleNumber = getPuzzleNumber();
+  const didYouKnowFact = getDidYouKnowFact();
 
   const finalScore =
   guesses.length > 0 ? guesses[guesses.length - 1]?.[0] || "0/5 correct" : "0/5 correct";
@@ -1101,6 +1183,18 @@ const finalModal = showFinalModal && puzzle && (
           ))}
         </ol>
       </div>
+
+      {didYouKnowFact && (
+        <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4 text-left`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Did You Know?
+          </div>
+
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
+            {didYouKnowFact}
+          </p>
+        </div>
+      )}
 
       <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
         <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
@@ -1384,6 +1478,7 @@ const achievementUnlockedModal =
                     index={index}
                     gameOver={gameOver}
                     themeClasses={themeClasses}
+                    animationsEnabled={animationsEnabled}
                   />
                 ))}
               </div>

@@ -9,6 +9,7 @@ type AchievementStats = {
     games: number;
     music: number;
     mystery: number;
+    dailyChallenge: number;
   };
   currentStreak: number;
   bestStreak: number;
@@ -32,6 +33,7 @@ function getDefaultAchievementStats(): AchievementStats {
       games: 0,
       music: 0,
       mystery: 0,
+      dailyChallenge: 0,
     },
     currentStreak: 0,
     bestStreak: 0,
@@ -44,7 +46,8 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     stats.winsByTheme.movies +
     stats.winsByTheme.games +
     stats.winsByTheme.music +
-    stats.winsByTheme.mystery;
+    stats.winsByTheme.mystery +
+    stats.winsByTheme.dailyChallenge;
 
   return [
     {
@@ -148,6 +151,31 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     },
 
     {
+      emoji: "🌟",
+      name: "Daily Challenger",
+      description: "Win your first Hard Daily Challenge.",
+      unlocked: stats.winsByTheme.dailyChallenge >= 1,
+      progress: `${Math.min(stats.winsByTheme.dailyChallenge, 1)}/1`,
+      category: "Hard Daily Challenge",
+    },
+    {
+      emoji: "🧠",
+      name: "No Hints Needed",
+      description: "Win 5 Hard Daily Challenges.",
+      unlocked: stats.winsByTheme.dailyChallenge >= 5,
+      progress: `${Math.min(stats.winsByTheme.dailyChallenge, 5)}/5`,
+      category: "Hard Daily Challenge",
+    },
+    {
+      emoji: "💀",
+      name: "Hard Mode Hero",
+      description: "Win 10 Hard Daily Challenges.",
+      unlocked: stats.winsByTheme.dailyChallenge >= 10,
+      progress: `${Math.min(stats.winsByTheme.dailyChallenge, 10)}/10`,
+      category: "Hard Daily Challenge",
+    },
+
+    {
       emoji: "🔥",
       name: "Hot Streak",
       description: "Reach a 3-day winning streak.",
@@ -236,11 +264,13 @@ export default function AchievementsPage() {
 
     try {
       const parsedStats = JSON.parse(savedStats) as AchievementStats;
+      const defaultStats = getDefaultAchievementStats();
+
       setStats({
-        ...getDefaultAchievementStats(),
+        ...defaultStats,
         ...parsedStats,
         winsByTheme: {
-          ...getDefaultAchievementStats().winsByTheme,
+          ...defaultStats.winsByTheme,
           ...parsedStats.winsByTheme,
         },
       });
@@ -253,6 +283,13 @@ export default function AchievementsPage() {
   const unlockedCount = achievements.filter(
     (achievement) => achievement.unlocked
   ).length;
+
+  const totalWins =
+    stats.winsByTheme.movies +
+    stats.winsByTheme.games +
+    stats.winsByTheme.music +
+    stats.winsByTheme.mystery +
+    stats.winsByTheme.dailyChallenge;
 
   const groupedAchievements = achievements.reduce<Record<string, Achievement[]>>(
     (groups, achievement) => {
@@ -279,17 +316,26 @@ export default function AchievementsPage() {
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Unlock badges by winning puzzles, building streaks, and solving
-            Rankle games perfectly.
+            Unlock badges by winning puzzles, building streaks, solving Rankle
+            games perfectly, and beating the Hard Daily Challenge.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-4">
             <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
               <div className="text-3xl font-black text-emerald-800">
                 {unlockedCount}/{achievements.length}
               </div>
               <div className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
                 Unlocked
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
+              <div className="text-3xl font-black text-emerald-800">
+                {totalWins}
+              </div>
+              <div className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                Total Wins
               </div>
             </div>
 
@@ -325,6 +371,13 @@ export default function AchievementsPage() {
               className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
             >
               How to Play
+            </Link>
+
+            <Link
+              href="/settings"
+              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+            >
+              Settings
             </Link>
           </div>
         </header>
