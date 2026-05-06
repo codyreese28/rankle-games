@@ -79,6 +79,13 @@ export default function HomePage() {
               >
                 Achievements
               </Link>
+
+              <Link
+                href="/settings"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+              >
+                Settings
+              </Link>
             </div>
           </div>
         </header>
