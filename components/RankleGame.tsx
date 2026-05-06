@@ -279,6 +279,8 @@ export default function RankleGame({
   const [stats, setStats] = useState<RankleStats | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [timeUntilNextPuzzle, setTimeUntilNextPuzzle] = useState("");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -434,6 +436,8 @@ export default function RankleGame({
   }
 
   function playWinConfetti() {
+    if (!animationsEnabled) return;
+
     confetti({
       particleCount: 140,
       spread: 80,
@@ -450,6 +454,8 @@ export default function RankleGame({
   }
 
   function playLoseSound() {
+    if (!soundEnabled) return;
+
     const AudioContextClass =
       window.AudioContext || (window as any).webkitAudioContext;
 
@@ -491,6 +497,20 @@ export default function RankleGame({
 
     playTone(180, 0, 0.35, "sawtooth");
     playTone(125, 0.38, 0.45, "sawtooth");
+  }
+
+  function toggleSound() {
+    const nextValue = !soundEnabled;
+
+    setSoundEnabled(nextValue);
+    localStorage.setItem("rankle-sound-enabled", String(nextValue));
+  }
+
+  function toggleAnimations() {
+    const nextValue = !animationsEnabled;
+
+    setAnimationsEnabled(nextValue);
+    localStorage.setItem("rankle-animations-enabled", String(nextValue));
   }
 
   const getDefaultStats = useCallback((): RankleStats => {
@@ -702,6 +722,26 @@ export default function RankleGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const savedSoundSetting = localStorage.getItem("rankle-sound-enabled");
+
+    if (savedSoundSetting === "false") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSoundEnabled(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedAnimationSetting = localStorage.getItem(
+      "rankle-animations-enabled"
+    );
+
+    if (savedAnimationSetting === "false") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAnimationsEnabled(false);
+    }
+  }, []);
+
   function recordGameResult(didWin: boolean, guessCount: number) {
     if (!puzzle) return;
 
@@ -830,17 +870,81 @@ export default function RankleGame({
     setMessage("Result copied to clipboard.");
   }
 
+  function getLoadingMessage() {
+    if (theme === "movies") {
+      return {
+        emoji: "🎬",
+        title: "Rolling the reels...",
+        text: "Building today's movie puzzle.",
+      };
+    }
+
+    if (theme === "games") {
+      return {
+        emoji: "🎮",
+        title: "Booting up...",
+        text: "Loading today's video game challenge.",
+      };
+    }
+
+    if (theme === "music") {
+      return {
+        emoji: "🎵",
+        title: "Tuning the albums...",
+        text: "Pulling today's music puzzle.",
+      };
+    }
+
+    if (theme === "mystery") {
+      return {
+        emoji: "❓",
+        title: "Mixing the mystery...",
+        text: "Combining movies, games, and music.",
+      };
+    }
+
+    return {
+      emoji: "🏆",
+      title: "Loading...",
+      text: "Getting today's game ready.",
+    };
+  }
+
+  const loadingMessage = getLoadingMessage();
+
   const loadingContent = (
     <div
       className={`rounded-3xl border ${themeClasses.border} ${themeClasses.panel} p-8 text-center shadow-lg ${themeClasses.glow}`}
     >
       <div
+        className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${themeClasses.accentSoft} text-4xl ring-1 ${themeClasses.accentBorder}`}
+      >
+        {loadingMessage.emoji}
+      </div>
+
+      <div
         className={`mb-3 text-sm font-black uppercase tracking-[0.35em] ${themeClasses.accentText}`}
       >
         Rankle Games
       </div>
-      <h1 className="text-4xl font-black text-slate-950">Loading...</h1>
-      <p className="mt-3 text-slate-600">Getting today&apos;s game ready.</p>
+
+      <h1 className="text-4xl font-black text-slate-950">
+        {loadingMessage.title}
+      </h1>
+
+      <p className="mt-3 text-slate-600">{loadingMessage.text}</p>
+
+      <div className="mx-auto mt-6 flex w-40 justify-center gap-2">
+        <span
+          className={`h-3 w-3 animate-bounce rounded-full ${themeClasses.accentSoft}`}
+        />
+        <span
+          className={`h-3 w-3 animate-bounce rounded-full ${themeClasses.accentSoft} [animation-delay:120ms]`}
+        />
+        <span
+          className={`h-3 w-3 animate-bounce rounded-full ${themeClasses.accentSoft} [animation-delay:240ms]`}
+        />
+      </div>
     </div>
   );
 
@@ -1335,6 +1439,29 @@ const achievementUnlockedModal =
           >
             Reset
           </button>
+
+          <button
+            onClick={toggleSound}
+            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
+          >
+            Sound: {soundEnabled ? "On" : "Off"}
+          </button>
+
+          <button
+            onClick={toggleAnimations}
+            className={`mt-3 w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
+          >
+            Animations: {animationsEnabled ? "On" : "Off"}
+          </button>
+
+          <a
+            href="https://forms.gle/GdFPKPXEg82JywGZ9"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`mt-3 block w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-center text-sm font-black text-slate-700 transition hover:text-slate-950`}
+          >
+            Report Issue
+          </a>
 
           <button
             onClick={() => setShowAchievementsModal(true)}
