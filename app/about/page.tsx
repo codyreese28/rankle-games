@@ -97,12 +97,21 @@ export default function AboutPage() {
             items from oldest to newest, and try to solve it in three guesses.
           </p>
 
-          <Link
-            href="/"
-            className="mt-6 inline-flex rounded-2xl bg-emerald-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-emerald-400 active:scale-[0.99]"
-          >
-            Back to Games
-          </Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/"
+              className="rounded-2xl bg-emerald-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-emerald-400 active:scale-[0.99]"
+            >
+              Back to Games
+            </Link>
+
+            <Link
+              href="/achievements"
+              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+            >
+              View Achievements
+            </Link>
+          </div>
         </header>
 
         <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
@@ -176,7 +185,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
+        <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 text-center shadow-lg shadow-slate-300/40 backdrop-blur-sm">
           <div className="mb-5">
             <div className="text-xs font-black uppercase tracking-[0.28em] text-purple-700">
               Badges
@@ -184,9 +193,9 @@ export default function AboutPage() {
             <h2 className="mt-2 text-3xl font-black text-slate-950">
               Achievements
             </h2>
-            <p className="mt-2 max-w-2xl text-slate-600">
-              Badges will reward wins, streaks, and perfect solves once player
-              stats are added.
+            <p className="mx-auto mt-2 max-w-2xl text-slate-600">
+              Badges reward wins, streaks, and perfect solves. Unlock them as
+              you play daily Rankle puzzles.
             </p>
           </div>
 
@@ -206,12 +215,19 @@ export default function AboutPage() {
                   {badge.requirement}
                 </p>
 
-                <div className="mt-4 inline-flex rounded-full border border-slate-300 bg-[#f7f4ec] px-3 py-1 text-xs font-black text-slate-500">
+                <div className="mt-4 inline-flex rounded-full border border-emerald-300 bg-[#e4f3e9] px-3 py-1 text-xs font-black text-emerald-800">
                   Available Now
                 </div>
               </div>
             ))}
           </div>
+
+          <Link
+            href="/achievements"
+            className="mt-6 inline-flex rounded-2xl bg-emerald-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-emerald-400 active:scale-[0.99]"
+          >
+            View All Achievements
+          </Link>
         </section>
 
         <footer className="py-8 text-center text-xs text-slate-500">
