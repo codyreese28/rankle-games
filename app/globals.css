@@ -19,6 +19,9 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   font-family: Arial, Helvetica, sans-serif;
+
+  /* Helps with iPhone safe-area spacing */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Keeps the fixed background smoother on mobile */
@@ -27,6 +30,25 @@ body {
     background-attachment: scroll;
     background-position: center top;
   }
+}
+
+/* Makes horizontal category scrolling cleaner on phones */
+nav {
+  scrollbar-width: thin;
+}
+
+/* Optional: nicer horizontal scroll on WebKit browsers */
+nav::-webkit-scrollbar {
+  height: 6px;
+}
+
+nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+nav::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
 }
 
 /* Rankle card reveal animation */

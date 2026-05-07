@@ -216,24 +216,24 @@ function SortableCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex items-center gap-4 rounded-3xl border ${themeClasses.border} bg-white/70 px-4 py-3 shadow-sm transition ${
+      className={`group flex items-center gap-3 rounded-3xl border ${themeClasses.border} bg-white/70 px-3 py-2 shadow-sm transition sm:gap-4 sm:px-4 sm:py-3 ${
         animationsEnabled ? "animate-rankle-card-reveal opacity-0" : ""
       } ${
         gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
       }`}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-[#f7f4ec] text-base font-black text-slate-700">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-[#f7f4ec] text-sm font-black text-slate-700 sm:h-11 sm:w-11 sm:text-base">
         {index + 1}
       </div>
 
       <img
         src={item.image}
         alt={item.title}
-        className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-slate-300"
+        className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-slate-300 sm:h-20 sm:w-20"
       />
 
       <div className="min-w-0 flex-1">
-        <div className="truncate text-lg font-black text-slate-950">
+        <div className="truncate text-base font-black text-slate-950 sm:text-lg">
           {item.title}
         </div>
         <div className="text-xs font-semibold text-slate-500">
@@ -242,7 +242,9 @@ function SortableCard({
       </div>
 
       {!gameOver && (
-        <div className="text-xl font-black text-slate-400">{"\u2261"}</div>
+        <div className="px-1 text-lg font-black text-slate-400 sm:text-xl">
+          {"\u2261"}
+        </div>
       )}
     </div>
   );
@@ -1422,7 +1424,9 @@ const achievementUnlockedModal =
   const gameContent = (
     <div
       className={
-        embedded ? "w-full" : "relative mx-auto max-w-7xl px-5 py-6"
+        embedded
+          ? "w-full pb-24 lg:pb-0"
+          : "relative mx-auto max-w-7xl px-5 py-6 pb-24 lg:pb-6"
       }
     >
       <header
@@ -1526,12 +1530,14 @@ const achievementUnlockedModal =
           </div>
 
           {!gameOver && (
-            <button
-              onClick={checkGuess}
-              className={`w-full rounded-2xl ${themeClasses.button} px-5 py-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
-            >
-              Submit Guess
-            </button>
+            <div className="hidden lg:block">
+              <button
+                onClick={checkGuess}
+                className={`w-full rounded-2xl ${themeClasses.button} px-5 py-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+              >
+                Submit Guess
+              </button>
+            </div>
           )}
 
           <a
@@ -1628,10 +1634,22 @@ const achievementUnlockedModal =
     </div>
   );
 
+  const mobileSubmitButton = !gameOver && (
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-300 bg-[#f7f4ec]/95 p-3 shadow-2xl backdrop-blur-md lg:hidden">
+      <button
+        onClick={checkGuess}
+        className={`w-full rounded-2xl ${themeClasses.button} p-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
+      >
+        Submit Guess
+      </button>
+    </div>
+  );
+
   if (embedded) {
     return (
       <div className="text-slate-900">
         {gameContent}
+        {mobileSubmitButton}
         {finalModal}
         {achievementsModal}
         {achievementUnlockedModal}
@@ -1645,6 +1663,7 @@ const achievementUnlockedModal =
       className={`min-h-screen overflow-hidden ${themeClasses.pageBg} text-slate-900`}
     >
       {gameContent}
+      {mobileSubmitButton}
       {finalModal}
       {achievementsModal}
       {achievementUnlockedModal}

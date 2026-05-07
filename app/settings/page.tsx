@@ -1,275 +1,193 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import RankleGame from "@/components/RankleGame";
 
-export default function SettingsPage() {
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
-  const [message, setMessage] = useState("");
+type CategoryKey = "movies" | "games" | "music" | "mystery";
+type SelectedGameKey = CategoryKey | "dailyChallenge";
 
-  useEffect(() => {
-    const savedSound = localStorage.getItem("rankle-sound-enabled");
-    const savedAnimations = localStorage.getItem("rankle-animations-enabled");
+const categories = {
+  movies: {
+    name: "Movies",
+    emoji: "🎬",
+    apiPath: "/api/movies/today",
+    storagePrefix: "rankle-movies",
+    accentLabel: "Daily Movie Sort",
+    theme: "movies" as const,
+  },
+  games: {
+    name: "Games",
+    emoji: "🎮",
+    apiPath: "/api/games/today",
+    storagePrefix: "rankle-video-games",
+    accentLabel: "Daily Video Game Sort",
+    theme: "games" as const,
+  },
+  music: {
+    name: "Music",
+    emoji: "🎵",
+    apiPath: "/api/music/today",
+    storagePrefix: "rankle-music",
+    accentLabel: "Daily Music Sort",
+    theme: "music" as const,
+  },
+  mystery: {
+    name: "Mystery",
+    emoji: "❓",
+    apiPath: "/api/mystery/today",
+    storagePrefix: "rankle-mystery",
+    accentLabel: "Daily Mystery Sort",
+    theme: "mystery" as const,
+  },
+};
 
-    setSoundEnabled(savedSound !== "false");
-    setAnimationsEnabled(savedAnimations !== "false");
-  }, []);
+const dailyChallenge = {
+  name: "Daily Challenge",
+  emoji: "🌟",
+  apiPath: "/api/daily-challenge/today",
+  storagePrefix: "rankle-daily-challenge",
+  accentLabel: "Hard Daily Mix",
+  theme: "mystery" as const,
+};
 
-  function toggleSound() {
-    const nextValue = !soundEnabled;
+export default function HomePage() {
+  const [selectedGameKey, setSelectedGameKey] =
+    useState<SelectedGameKey>("movies");
 
-    setSoundEnabled(nextValue);
-    localStorage.setItem("rankle-sound-enabled", String(nextValue));
-    setMessage(`Sound turned ${nextValue ? "on" : "off"}.`);
-  }
+  const categoryKeys = Object.keys(categories) as CategoryKey[];
 
-  function toggleAnimations() {
-    const nextValue = !animationsEnabled;
+  const selectedGame =
+    selectedGameKey === "dailyChallenge"
+      ? dailyChallenge
+      : categories[selectedGameKey];
 
-    setAnimationsEnabled(nextValue);
-    localStorage.setItem("rankle-animations-enabled", String(nextValue));
-    setMessage(`Animations turned ${nextValue ? "on" : "off"}.`);
-  }
-
-  function resetDailyGameProgress() {
-    const confirmed = window.confirm(
-      "Reset saved daily game progress on this device? This will not reset achievements."
-    );
-
-    if (!confirmed) return;
-
-    const keysToRemove: string[] = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-
-      if (
-        key &&
-        key.startsWith("rankle-") &&
-        key !== "rankle-achievements" &&
-        key !== "rankle-sound-enabled" &&
-        key !== "rankle-animations-enabled"
-      ) {
-        keysToRemove.push(key);
-      }
-    }
-
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-
-    setMessage("Saved daily game progress has been reset.");
-  }
-
-  function resetAchievements() {
-    const confirmed = window.confirm(
-      "Reset all achievements? This cannot be undone."
-    );
-
-    if (!confirmed) return;
-
-    localStorage.removeItem("rankle-achievements");
-    setMessage("Achievements have been reset.");
-  }
-
-  function resetAllRankleProgress() {
-    const confirmed = window.confirm(
-      "Reset all Rankle progress on this device? This will clear saved games, achievements, sound settings, and animation settings."
-    );
-
-    if (!confirmed) return;
-
-    const keysToRemove: string[] = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-
-      if (key && key.startsWith("rankle")) {
-        keysToRemove.push(key);
-      }
-    }
-
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-
-    setSoundEnabled(true);
-    setAnimationsEnabled(true);
-    setMessage("All Rankle progress and settings have been reset.");
-  }
+  const isDailySelected = selectedGameKey === "dailyChallenge";
 
   return (
     <main className="min-h-screen bg-transparent text-slate-900">
-      <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
-        <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 px-6 py-8 text-center shadow-lg shadow-slate-300/40 backdrop-blur-sm">
-          <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">
-            Rankle Games
-          </div>
+      <div className="relative mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6 md:px-6">
+        <header className="mb-4 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 px-4 py-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm sm:mb-6 sm:px-6 sm:py-6">
+          <div className="text-center">
+            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-700 sm:text-xs sm:tracking-[0.35em]">
+              Daily Ranking Games
+            </div>
 
-          <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 md:text-6xl">
-            Settings
-          </h1>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl md:text-6xl">
+              Rankle Games
+            </h1>
 
-          <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Manage your Rankle experience on this device. Settings and progress
-            are saved in your browser.
-          </p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold text-slate-600 sm:text-base">
+              Pick a category, sort the list, and see how close you can get in
+              three guesses.
+            </p>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/"
-              className="rounded-2xl bg-emerald-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-emerald-400 active:scale-[0.99]"
-            >
-              Back to Games
-            </Link>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 sm:gap-3">
+              <Link
+                href="/about"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800 sm:px-5 sm:text-sm"
+              >
+                How to Play
+              </Link>
 
-            <Link
-              href="/achievements"
-              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
-            >
-              Achievements
-            </Link>
+              <Link
+                href="/achievements"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800 sm:px-5 sm:text-sm"
+              >
+                Achievements
+              </Link>
 
-            <Link
-              href="/about"
-              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
-            >
-              How to Play
-            </Link>
+              <Link
+                href="/settings"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800 sm:px-5 sm:text-sm"
+              >
+                Settings
+              </Link>
+            </div>
           </div>
         </header>
 
-        {message && (
-          <div className="mb-6 rounded-2xl border border-emerald-300 bg-[#e4f3e9] p-4 text-center font-black text-emerald-800 shadow-md">
-            {message}
-          </div>
-        )}
-
-        <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
-          <div className="mb-5">
-            <div className="text-xs font-black uppercase tracking-[0.28em] text-emerald-700">
-              Gameplay
-            </div>
-
-            <h2 className="mt-2 text-3xl font-black text-slate-950">
-              Preferences
-            </h2>
-
-            <p className="mt-2 text-slate-600">
-              These settings control sound and animation effects during the
-              game.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-300 bg-[#ece8df] p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-950">Sound</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Controls the lose sound effect.
-                </p>
+        <section className="mb-4 overflow-hidden rounded-3xl border border-amber-300/70 bg-gradient-to-br from-amber-100/95 via-[#f7f4ec]/95 to-purple-100/95 p-4 shadow-lg shadow-amber-200/40 backdrop-blur-sm sm:mb-6 sm:p-5">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <div className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-800 sm:text-xs sm:tracking-[0.25em]">
+                Today&apos;s Featured Challenge
               </div>
 
-              <button
-                onClick={toggleSound}
-                className={`rounded-2xl px-5 py-3 font-black text-white shadow-lg transition active:scale-[0.99] ${
-                  soundEnabled
-                    ? "bg-emerald-500 hover:bg-emerald-400"
-                    : "bg-slate-500 hover:bg-slate-400"
-                }`}
-              >
-                Sound: {soundEnabled ? "On" : "Off"}
-              </button>
+              <h2 className="mt-3 text-2xl font-black text-slate-950 sm:text-3xl md:text-4xl">
+                🌟 Hard Daily Challenge
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm font-bold text-slate-600 md:text-base">
+                A separate hard mixed puzzle using movies, video games, and
+                music. No category hints are shown.
+              </p>
             </div>
-
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-300 bg-[#ece8df] p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-950">
-                  Animations
-                </h3>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Controls win confetti and celebration effects.
-                </p>
-              </div>
-
-              <button
-                onClick={toggleAnimations}
-                className={`rounded-2xl px-5 py-3 font-black text-white shadow-lg transition active:scale-[0.99] ${
-                  animationsEnabled
-                    ? "bg-emerald-500 hover:bg-emerald-400"
-                    : "bg-slate-500 hover:bg-slate-400"
-                }`}
-              >
-                Animations: {animationsEnabled ? "On" : "Off"}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
-          <div className="mb-5">
-            <div className="text-xs font-black uppercase tracking-[0.28em] text-blue-700">
-              Support
-            </div>
-
-            <h2 className="mt-2 text-3xl font-black text-slate-950">
-              Report a Problem
-            </h2>
-
-            <p className="mt-2 text-slate-600">
-              Report wrong dates, duplicate items, broken images, or anything
-              else that looks off.
-            </p>
-          </div>
-
-          <a
-            href="https://forms.gle/GdFPKPXEg82JywGZ9"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex rounded-2xl bg-blue-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-blue-400 active:scale-[0.99]"
-          >
-            Open Report Form
-          </a>
-        </section>
-
-        <section className="rounded-3xl border border-red-200 bg-[#fff1f1]/90 p-5 shadow-lg shadow-red-100/60 backdrop-blur-sm">
-          <div className="mb-5">
-            <div className="text-xs font-black uppercase tracking-[0.28em] text-red-700">
-              Reset
-            </div>
-
-            <h2 className="mt-2 text-3xl font-black text-slate-950">
-              Reset Data
-            </h2>
-
-            <p className="mt-2 text-slate-600">
-              These actions only affect this browser and device.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <button
-              onClick={resetDailyGameProgress}
-              className="rounded-2xl border border-red-300 bg-white/70 px-5 py-3 font-black text-red-700 transition hover:bg-red-50 active:scale-[0.99]"
-            >
-              Reset Game Progress
-            </button>
 
             <button
-              onClick={resetAchievements}
-              className="rounded-2xl border border-red-300 bg-white/70 px-5 py-3 font-black text-red-700 transition hover:bg-red-50 active:scale-[0.99]"
+              onClick={() => setSelectedGameKey("dailyChallenge")}
+              className={`rounded-2xl px-5 py-4 text-sm font-black shadow-lg transition active:scale-[0.99] sm:px-6 ${
+                isDailySelected
+                  ? "bg-slate-900 text-white"
+                  : "bg-amber-500 text-white hover:bg-amber-400"
+              }`}
             >
-              Reset Achievements
-            </button>
-
-            <button
-              onClick={resetAllRankleProgress}
-              className="rounded-2xl bg-red-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-red-400 active:scale-[0.99]"
-            >
-              Reset All Rankle Data
+              {isDailySelected
+                ? "Daily Challenge Selected"
+                : "Play Daily Challenge"}
             </button>
           </div>
         </section>
+
+        <div className="grid gap-4 xl:grid-cols-[220px_1fr] xl:gap-6">
+          <aside className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-3 shadow-lg shadow-slate-300/40 backdrop-blur-sm sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3 xl:mb-4">
+              <h2 className="text-xs font-black uppercase tracking-[0.25em] text-slate-500 sm:text-sm">
+                Categories
+              </h2>
+
+              <span className="text-xs font-bold text-slate-400 xl:hidden">
+                Swipe →
+              </span>
+            </div>
+
+            <nav className="flex gap-3 overflow-x-auto pb-2 xl:block xl:space-y-3 xl:overflow-visible xl:pb-0">
+              {categoryKeys.map((key) => {
+                const category = categories[key];
+                const isActive = selectedGameKey === key;
+
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedGameKey(key)}
+                    className={`flex min-w-[145px] shrink-0 items-center gap-3 rounded-2xl border px-4 py-4 text-left text-base font-bold transition xl:w-full xl:min-w-0 xl:text-lg ${
+                      isActive
+                        ? "border-emerald-500 bg-[#dfeee5] text-emerald-800"
+                        : "border-slate-300 bg-[#ece8df] text-slate-700 hover:border-emerald-500 hover:bg-[#dfeee5] hover:text-emerald-800"
+                    }`}
+                  >
+                    <span className="text-2xl">{category.emoji}</span>
+                    <span>{category.name}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <section className="rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-3 shadow-lg shadow-slate-300/40 backdrop-blur-sm sm:p-5">
+            <RankleGame
+              key={selectedGameKey}
+              apiPath={selectedGame.apiPath}
+              storagePrefix={selectedGame.storagePrefix}
+              accentLabel={selectedGame.accentLabel}
+              theme={selectedGame.theme}
+              embedded
+            />
+          </section>
+        </div>
 
         <footer className="py-8 text-center text-xs text-slate-500">
-          Settings are saved locally using your browser storage.
+          New daily puzzles. More Rankle categories coming soon.
         </footer>
       </div>
     </main>
