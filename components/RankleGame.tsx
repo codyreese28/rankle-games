@@ -216,7 +216,7 @@ function SortableCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex items-center gap-3 rounded-3xl border ${themeClasses.border} bg-white/70 px-3 py-2 shadow-sm transition sm:gap-4 sm:px-4 sm:py-3 ${
+      className={`group flex items-center gap-3 rounded-3xl border ${themeClasses.border} bg-white/70 px-3 py-2 shadow-sm transition-all duration-500 sm:gap-4 sm:px-4 sm:py-3 ${
         animationsEnabled ? "animate-rankle-card-reveal opacity-0" : ""
       } ${
         gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
@@ -263,8 +263,10 @@ export default function RankleGame({
   const [items, setItems] = useState<RankleItem[]>([]);
   const [guesses, setGuesses] = useState<string[][]>([]);
   const [message, setMessage] = useState("");
+  const [nickname, setNickname] = useState("");
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [showFinalModal, setShowFinalModal] = useState(false);
@@ -295,6 +297,7 @@ export default function RankleGame({
     setMessage("");
     setGameOver(false);
     setWon(false);
+    setIsRevealingAnswer(false);
     setLoaded(false);
     setLoadError("");
     setShowFinalModal(false);
@@ -778,6 +781,12 @@ export default function RankleGame({
     }
   }, []);
 
+  useEffect(() => {
+    const savedNickname = localStorage.getItem("rankle-nickname");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNickname(savedNickname || "");
+  }, []);
+
   function recordGameResult(didWin: boolean, guessCount: number) {
     if (!puzzle) return;
 
@@ -858,10 +867,10 @@ export default function RankleGame({
     if (newGuesses.length >= 3) {
       setWon(false);
       setGameOver(true);
-      setMessage("Game over. Here is the correct order.");
+      setMessage("Revealing the correct order...");
       recordGameResult(false, newGuesses.length);
-      setShowFinalModal(true);
       playLoseSound();
+      setIsRevealingAnswer(true);
 
       const orderedItems = puzzle.answer
         .map((answerItem) =>
@@ -869,7 +878,16 @@ export default function RankleGame({
         )
         .filter((item): item is RankleItem => item !== undefined);
 
-      setItems(orderedItems);
+      setTimeout(() => {
+        setItems(orderedItems);
+        setMessage("Game over. Here is the correct order.");
+
+        setTimeout(() => {
+          setIsRevealingAnswer(false);
+          setShowFinalModal(true);
+        }, 650);
+      }, 500);
+
       return;
     }
 
@@ -885,6 +903,7 @@ export default function RankleGame({
     setMessage("");
     setGameOver(false);
     setWon(false);
+    setIsRevealingAnswer(false);
     setShowFinalModal(false);
   }
 
@@ -910,6 +929,10 @@ export default function RankleGame({
     return "\u{1F3C6}";
   }
 
+  function getPlayerName() {
+    return nickname.trim() || "You";
+  }
+
   function getDidYouKnowFact() {
     if (!puzzle || !puzzle.answer || puzzle.answer.length === 0) {
       return null;
@@ -928,6 +951,77 @@ export default function RankleGame({
     return `The oldest item today was ${oldestItem.title} from ${oldestYear}. The newest item was ${newestItem.title} from ${newestYear}.`;
   }
 
+  function getRankleIQ() {
+    if (!puzzle || guesses.length === 0) return 0;
+
+    const bestCorrectCount = Math.max(
+      ...guesses.map((guess) => {
+        const match = guess[0]?.match(/(\d+)\/5/);
+        return match ? Number(match[1]) : 0;
+      })
+    );
+
+    let score = 0;
+
+    if (won) {
+      if (guesses.length === 1) score = 1000;
+      if (guesses.length === 2) score = 850;
+      if (guesses.length === 3) score = 700;
+    } else {
+      score = bestCorrectCount * 100;
+    }
+
+    if (storagePrefix === "rankle-daily-challenge") {
+      score += 100;
+    }
+
+    if (won && guesses.length === 1) {
+      score += 50;
+    }
+
+    return Math.min(score, 1100);
+  }
+
+  function getEndGameRecap() {
+    if (!puzzle || guesses.length === 0) return null;
+
+    const bestGuess = guesses.reduce(
+      (best, current, index) => {
+        const match = current[0]?.match(/(\d+)\/5/);
+        const correctCount = match ? Number(match[1]) : 0;
+
+        if (correctCount > best.correctCount) {
+          return {
+            guessNumber: index + 1,
+            correctCount,
+          };
+        }
+
+        return best;
+      },
+      {
+        guessNumber: 1,
+        correctCount: 0,
+      }
+    );
+
+    const oldestItem = puzzle.answer[0];
+    const newestItem = puzzle.answer[puzzle.answer.length - 1];
+
+    const oldestYear = oldestItem.releaseDate.slice(0, 4);
+    const newestYear = newestItem.releaseDate.slice(0, 4);
+    const yearRange = Number(newestYear) - Number(oldestYear);
+
+    return {
+      bestGuess,
+      oldestItem,
+      newestItem,
+      oldestYear,
+      newestYear,
+      yearRange,
+    };
+  }
+
   function shareResult() {
     if (!puzzle) return;
 
@@ -936,7 +1030,9 @@ export default function RankleGame({
 
     const resultText = [
       `${getGameEmoji()} ${puzzle.title} #${puzzleNumber}`,
+      `${getPlayerName()} ${won ? "solved it" : "did not solve it"}`,
       won ? `✅ Solved in ${guesses.length}/3` : "❌ Failed",
+      `🧠 Rankle IQ: ${getRankleIQ()}`,
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
       "",
@@ -1084,6 +1180,8 @@ export default function RankleGame({
 
   const puzzleNumber = getPuzzleNumber();
   const didYouKnowFact = getDidYouKnowFact();
+  const rankleIQ = getRankleIQ();
+  const endGameRecap = getEndGameRecap();
 
   const finalScore =
   guesses.length > 0 ? guesses[guesses.length - 1]?.[0] || "0/5 correct" : "0/5 correct";
@@ -1099,8 +1197,16 @@ const finalModal = showFinalModal && puzzle && (
         Final Results
       </div>
 
+      {nickname && (
+        <div className="mb-3 text-sm font-black text-slate-500">
+          Player: <span className={themeClasses.accentText}>{nickname}</span>
+        </div>
+      )}
+
       <h2 className="text-4xl font-black text-slate-950 md:text-5xl">
-        {won ? "You solved it!" : "Game over"}
+        {won
+          ? `${getPlayerName()} solved it!`
+          : `${getPlayerName()} reached game over`}
       </h2>
 
       <p className="mt-3 text-base font-bold text-slate-700">
@@ -1113,7 +1219,7 @@ const finalModal = showFinalModal && puzzle && (
           : "You used all 3 guesses."}
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 sm:grid-cols-4">
         <div className={`rounded-2xl ${themeClasses.card} p-4`}>
           <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
             Result
@@ -1140,7 +1246,63 @@ const finalModal = showFinalModal && puzzle && (
             {finalScore.replace(" correct", "")}
           </div>
         </div>
+
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Rankle IQ
+          </div>
+          <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
+            {rankleIQ}
+          </div>
+        </div>
       </div>
+
+      {endGameRecap && (
+        <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
+          <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
+            Game Recap
+          </h3>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className={`${themeClasses.panel} rounded-xl p-3 text-left`}>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Best Guess
+              </div>
+              <div className={`mt-1 text-lg font-black ${themeClasses.accentText}`}>
+                Guess {endGameRecap.bestGuess.guessNumber}:{" "}
+                {endGameRecap.bestGuess.correctCount}/5
+              </div>
+            </div>
+
+            <div className={`${themeClasses.panel} rounded-xl p-3 text-left`}>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Year Range
+              </div>
+              <div className={`mt-1 text-lg font-black ${themeClasses.accentText}`}>
+                {endGameRecap.yearRange} years
+              </div>
+            </div>
+
+            <div className={`${themeClasses.panel} rounded-xl p-3 text-left`}>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Oldest Item
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-700">
+                {endGameRecap.oldestItem.title} - {endGameRecap.oldestYear}
+              </div>
+            </div>
+
+            <div className={`${themeClasses.panel} rounded-xl p-3 text-left`}>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Newest Item
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-700">
+                {endGameRecap.newestItem.title} - {endGameRecap.newestYear}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
         <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
@@ -1558,7 +1720,9 @@ const achievementUnlockedModal =
 
           {message && (
             <p
-              className={`mt-4 rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-center text-sm font-bold text-slate-700`}
+              className={`mt-4 rounded-2xl border ${themeClasses.border} ${
+                isRevealingAnswer ? themeClasses.accentPill : themeClasses.card
+              } p-3 text-center text-sm font-bold text-slate-700`}
             >
               {message}
             </p>

@@ -41,6 +41,32 @@ function getDefaultAchievementStats(): AchievementStats {
   };
 }
 
+function getMasteryLevel(wins: number) {
+  if (wins >= 20) return 5;
+  if (wins >= 12) return 4;
+  if (wins >= 7) return 3;
+  if (wins >= 3) return 2;
+  return 1;
+}
+
+function getNextMasteryTarget(wins: number) {
+  if (wins < 3) return 3;
+  if (wins < 7) return 7;
+  if (wins < 12) return 12;
+  if (wins < 20) return 20;
+  return null;
+}
+
+function getMasteryProgress(wins: number) {
+  const nextTarget = getNextMasteryTarget(wins);
+
+  if (!nextTarget) {
+    return "Max Level";
+  }
+
+  return `${wins}/${nextTarget} wins`;
+}
+
 function getAchievements(stats: AchievementStats): Achievement[] {
   const totalWins =
     stats.winsByTheme.movies +
@@ -284,6 +310,34 @@ export default function AchievementsPage() {
     (achievement) => achievement.unlocked
   ).length;
 
+  const masteryLevels = [
+    {
+      emoji: "🎬",
+      name: "Movies",
+      wins: stats.winsByTheme.movies,
+    },
+    {
+      emoji: "🎮",
+      name: "Video Games",
+      wins: stats.winsByTheme.games,
+    },
+    {
+      emoji: "🎵",
+      name: "Music",
+      wins: stats.winsByTheme.music,
+    },
+    {
+      emoji: "❓",
+      name: "Mystery",
+      wins: stats.winsByTheme.mystery,
+    },
+    {
+      emoji: "🌟",
+      name: "Hard Daily",
+      wins: stats.winsByTheme.dailyChallenge,
+    },
+  ];
+
   const totalWins =
     stats.winsByTheme.movies +
     stats.winsByTheme.games +
@@ -381,6 +435,51 @@ export default function AchievementsPage() {
             </Link>
           </div>
         </header>
+
+        <section className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 p-5 shadow-lg shadow-slate-300/40 backdrop-blur-sm">
+          <div className="mb-5">
+            <div className="text-xs font-black uppercase tracking-[0.28em] text-purple-700">
+              Mastery
+            </div>
+
+            <h2 className="mt-2 text-3xl font-black text-slate-950">
+              Category Mastery Levels
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Win puzzles in each category to level up your mastery. Level 5 is
+              the current max.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            {masteryLevels.map((mastery) => {
+              const level = getMasteryLevel(mastery.wins);
+              const progress = getMasteryProgress(mastery.wins);
+
+              return (
+                <div
+                  key={mastery.name}
+                  className="rounded-2xl border border-slate-300 bg-[#ece8df] p-5 text-center shadow-md"
+                >
+                  <div className="text-5xl">{mastery.emoji}</div>
+
+                  <h3 className="mt-3 text-lg font-black text-slate-950">
+                    {mastery.name}
+                  </h3>
+
+                  <div className="mt-3 rounded-full border border-emerald-300 bg-[#e4f3e9] px-3 py-2 text-sm font-black text-emerald-800">
+                    Level {level}
+                  </div>
+
+                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                    {progress}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         <div className="space-y-6">
           {Object.entries(groupedAchievements).map(
