@@ -933,24 +933,6 @@ export default function RankleGame({
     return nickname.trim() || "You";
   }
 
-  function getDidYouKnowFact() {
-    if (!puzzle || !puzzle.answer || puzzle.answer.length === 0) {
-      return null;
-    }
-
-    const oldestItem = puzzle.answer[0];
-    const newestItem = puzzle.answer[puzzle.answer.length - 1];
-
-    const oldestYear = oldestItem.releaseDate.slice(0, 4);
-    const newestYear = newestItem.releaseDate.slice(0, 4);
-
-    if (oldestItem.id === newestItem.id) {
-      return `Today's item was released in ${oldestYear}.`;
-    }
-
-    return `The oldest item today was ${oldestItem.title} from ${oldestYear}. The newest item was ${newestItem.title} from ${newestYear}.`;
-  }
-
   function getRankleIQ() {
     if (!puzzle || guesses.length === 0) return 0;
 
@@ -1026,7 +1008,6 @@ export default function RankleGame({
     if (!puzzle) return;
 
     const puzzleNumber = getPuzzleNumber();
-    const didYouKnowFact = getDidYouKnowFact();
 
     const resultText = [
       `${getGameEmoji()} ${puzzle.title} #${puzzleNumber}`,
@@ -1036,7 +1017,6 @@ export default function RankleGame({
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
       "",
-      ...(didYouKnowFact ? [`Did you know? ${didYouKnowFact}`, ""] : []),
       `Next puzzle in ${timeUntilNextPuzzle}`,
       "",
       "Play Rankle Games:",
@@ -1179,7 +1159,6 @@ export default function RankleGame({
   if (!puzzle) return null;
 
   const puzzleNumber = getPuzzleNumber();
-  const didYouKnowFact = getDidYouKnowFact();
   const rankleIQ = getRankleIQ();
   const endGameRecap = getEndGameRecap();
 
@@ -1347,18 +1326,6 @@ const finalModal = showFinalModal && puzzle && (
           ))}
         </ol>
       </div>
-
-      {didYouKnowFact && (
-        <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4 text-left`}>
-          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-            Did You Know?
-          </div>
-
-          <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-            {didYouKnowFact}
-          </p>
-        </div>
-      )}
 
       <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
         <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
