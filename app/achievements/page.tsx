@@ -9,6 +9,7 @@ type AchievementStats = {
     games: number;
     music: number;
     mystery: number;
+    sports: number;
     dailyChallenge: number;
   };
   currentStreak: number;
@@ -33,6 +34,7 @@ function getDefaultAchievementStats(): AchievementStats {
       games: 0,
       music: 0,
       mystery: 0,
+      sports: 0,
       dailyChallenge: 0,
     },
     currentStreak: 0,
@@ -73,6 +75,7 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     stats.winsByTheme.games +
     stats.winsByTheme.music +
     stats.winsByTheme.mystery +
+    stats.winsByTheme.sports +
     stats.winsByTheme.dailyChallenge;
 
   return [
@@ -174,6 +177,31 @@ function getAchievements(stats: AchievementStats): Achievement[] {
       unlocked: stats.winsByTheme.mystery >= 10,
       progress: `${Math.min(stats.winsByTheme.mystery, 10)}/10`,
       category: "Mystery",
+    },
+
+    {
+      emoji: "🏆",
+      name: "Sports Rookie",
+      description: "Win your first Sports Teams puzzle.",
+      unlocked: stats.winsByTheme.sports >= 1,
+      progress: `${Math.min(stats.winsByTheme.sports, 1)}/1`,
+      category: "Sports Teams",
+    },
+    {
+      emoji: "🏟️",
+      name: "Franchise Fan",
+      description: "Win 5 Sports Teams puzzles.",
+      unlocked: stats.winsByTheme.sports >= 5,
+      progress: `${Math.min(stats.winsByTheme.sports, 5)}/5`,
+      category: "Sports Teams",
+    },
+    {
+      emoji: "🥇",
+      name: "Sports Historian",
+      description: "Win 10 Sports Teams puzzles.",
+      unlocked: stats.winsByTheme.sports >= 10,
+      progress: `${Math.min(stats.winsByTheme.sports, 10)}/10`,
+      category: "Sports Teams",
     },
 
     {
@@ -332,6 +360,11 @@ export default function AchievementsPage() {
       wins: stats.winsByTheme.mystery,
     },
     {
+      emoji: "🏆",
+      name: "Sports",
+      wins: stats.winsByTheme.sports,
+    },
+    {
       emoji: "🌟",
       name: "Hard Daily",
       wins: stats.winsByTheme.dailyChallenge,
@@ -343,6 +376,7 @@ export default function AchievementsPage() {
     stats.winsByTheme.games +
     stats.winsByTheme.music +
     stats.winsByTheme.mystery +
+    stats.winsByTheme.sports +
     stats.winsByTheme.dailyChallenge;
 
   const groupedAchievements = achievements.reduce<Record<string, Achievement[]>>(
@@ -452,7 +486,7 @@ export default function AchievementsPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {masteryLevels.map((mastery) => {
               const level = getMasteryLevel(mastery.wins);
               const progress = getMasteryProgress(mastery.wins);

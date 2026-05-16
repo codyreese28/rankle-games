@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type ThemeName = "movies" | "games" | "music" | "mystery";
+type ThemeName = "movies" | "games" | "music" | "mystery" | "sports";
 type RankleItem = {
   id: number | string;
   title: string;
@@ -57,6 +57,7 @@ type AchievementStats = {
     games: number;
     music: number;
     mystery: number;
+    sports: number;
     dailyChallenge: number;
   };
   currentStreak: number;
@@ -166,7 +167,7 @@ const themes: Record<ThemeName, ThemeClasses> = {
     glow: "shadow-purple-200/50",
     arrowText: "group-hover:text-purple-700",
   },
-    mystery: {
+  mystery: {
     pageBg: "bg-[#f1efe8]",
     panel: "bg-[#f8f3e8]",
     card: "bg-[#eee5d5]",
@@ -180,6 +181,21 @@ const themes: Record<ThemeName, ThemeClasses> = {
     buttonText: "text-white",
     glow: "shadow-amber-200/50",
     arrowText: "group-hover:text-amber-700",
+  },
+  sports: {
+    pageBg: "bg-transparent",
+    panel: "bg-[#f7f4ec]/95",
+    card: "bg-[#ece8df]/95",
+    cardHover: "hover:bg-[#dfeee5]",
+    border: "border-slate-300/80",
+    accentText: "text-emerald-800",
+    accentSoft: "bg-[#d5eadc]",
+    accentPill: "bg-[#e4f3e9]",
+    accentBorder: "border-emerald-300",
+    button: "bg-emerald-500 hover:bg-emerald-400",
+    buttonText: "text-white",
+    glow: "shadow-emerald-200/40",
+    arrowText: "group-hover:text-emerald-800",
   },
 };
 
@@ -536,6 +552,7 @@ export default function RankleGame({
         games: 0,
         music: 0,
         mystery: 0,
+        sports: 0,
         dailyChallenge: 0,
       },
       currentStreak: 0,
@@ -548,7 +565,13 @@ export default function RankleGame({
     return "rankle-achievements";
   }
 
-  function getAchievementCategoryKey() {
+  function getAchievementCategoryKey():
+    | "movies"
+    | "games"
+    | "music"
+    | "mystery"
+    | "sports"
+    | "dailyChallenge" {
     if (storagePrefix === "rankle-daily-challenge") {
       return "dailyChallenge";
     }
@@ -690,6 +713,27 @@ export default function RankleGame({
         description: "Win a Mystery Rankle puzzle.",
         unlocked: stats.winsByTheme.mystery >= 1,
         progress: `${Math.min(stats.winsByTheme.mystery, 1)}/1`,
+      },
+      {
+        emoji: "\u{1F3C6}",
+        name: "Sports Rookie",
+        description: "Win your first Sports Teams puzzle.",
+        unlocked: stats.winsByTheme.sports >= 1,
+        progress: `${Math.min(stats.winsByTheme.sports, 1)}/1`,
+      },
+      {
+        emoji: "\u{1F3DF}\uFE0F",
+        name: "Franchise Fan",
+        description: "Win 5 Sports Teams puzzles.",
+        unlocked: stats.winsByTheme.sports >= 5,
+        progress: `${Math.min(stats.winsByTheme.sports, 5)}/5`,
+      },
+      {
+        emoji: "\u{1F947}",
+        name: "Sports Historian",
+        description: "Win 10 Sports Teams puzzles.",
+        unlocked: stats.winsByTheme.sports >= 10,
+        progress: `${Math.min(stats.winsByTheme.sports, 10)}/10`,
       },
       {
         emoji: "\u{1F31F}",
@@ -925,6 +969,7 @@ export default function RankleGame({
     if (theme === "games") return "\u{1F3AE}";
     if (theme === "music") return "\u{1F3B5}";
     if (theme === "mystery") return "\u2753";
+    if (theme === "sports") return "\u{1F3C6}";
 
     return "\u{1F3C6}";
   }
@@ -1057,6 +1102,14 @@ export default function RankleGame({
         emoji: "❓",
         title: "Mixing the mystery...",
         text: "Combining movies, games, and music.",
+      };
+    }
+
+    if (theme === "sports") {
+      return {
+        emoji: "\u{1F3C6}",
+        title: "Warming up...",
+        text: "Loading today's sports team puzzle.",
       };
     }
 

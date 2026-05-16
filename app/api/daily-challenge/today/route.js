@@ -51,6 +51,7 @@ export async function GET(request) {
     `${origin}/api/movies/today`,
     `${origin}/api/games/today`,
     `${origin}/api/music/today`,
+    `${origin}/api/sports/today`,
   ];
 
   const results = await Promise.all(

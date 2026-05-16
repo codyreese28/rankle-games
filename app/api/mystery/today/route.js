@@ -45,13 +45,13 @@ async function getPuzzleFromEndpoint(endpoint) {
 
 export async function GET(request) {
   const today = getTodayDateKey();
-
   const origin = new URL(request.url).origin;
 
   const endpoints = [
     `${origin}/api/movies/today`,
     `${origin}/api/games/today`,
     `${origin}/api/music/today`,
+    `${origin}/api/sports/today`,
   ];
 
   const results = await Promise.all(
@@ -71,6 +71,7 @@ export async function GET(request) {
       if (puzzle.gameType === "movies") emoji = "🎬";
       if (puzzle.gameType === "video-games") emoji = "🎮";
       if (puzzle.gameType === "music") emoji = "🎵";
+      if (puzzle.gameType === "sports") emoji = "🏆";
 
       return {
         id: `${puzzle.gameType}-${answerItem.id}`,
@@ -112,7 +113,7 @@ export async function GET(request) {
     gameType: "mystery",
     title: "Mystery Rankle",
     challenge:
-      "Sort these mixed movies, video games, and albums from oldest to newest.",
+      "Sort these mixed movies, video games, albums, and sports teams from oldest to newest.",
     items: selectedItems.map((item) => ({
       id: item.id,
       title: item.title,
