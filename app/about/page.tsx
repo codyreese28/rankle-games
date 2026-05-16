@@ -1,9 +1,10 @@
 import Link from "next/link";
+import RanklePageBackground from "@/components/RanklePageBackground";
 
 const rules = [
   {
     title: "Pick a category",
-    text: "Choose Movies, Video Games, Music, Mystery, or any future Rankle category.",
+    text: "Choose Movies, Video Games, Music, Sports Teams, Mystery, or Hard Daily Challenge.",
   },
   {
     title: "Drag into order",
@@ -39,49 +40,46 @@ const dataSources = [
     text: "Album titles, cover art, and release years are pulled from Discogs.",
   },
   {
+    emoji: "🏆",
+    name: "Sports Teams",
+    source: "Curated Team Data",
+    text: "Sports Teams uses current NFL, NBA, NHL, and MLB teams sorted by franchise founding year or first season.",
+  },
+  {
     emoji: "❓",
     name: "Mystery",
     source: "Mixed",
-    text: "Mystery Rankle combines Movies, Video Games, and Music into one mixed challenge.",
+    text: "Mystery Rankle combines Movies, Video Games, Music, and Sports Teams into one mixed challenge.",
+  },
+  {
+    emoji: "🌟",
+    name: "Hard Daily Challenge",
+    source: "Mixed",
+    text: "Hard Daily Challenge mixes categories without showing category hints.",
   },
 ];
 
 const badges = [
-  {
-    emoji: "🎬",
-    name: "Movie Buff",
-    requirement: "Win 5 Movie puzzles.",
-  },
+  { emoji: "🎬", name: "Movie Buff", requirement: "Win 5 Movie puzzles." },
   {
     emoji: "🎮",
     name: "Controller King",
     requirement: "Win 5 Video Game puzzles.",
   },
-  {
-    emoji: "🎵",
-    name: "Album Expert",
-    requirement: "Win 5 Music puzzles.",
-  },
-  {
-    emoji: "❓",
-    name: "Mystery Solver",
-    requirement: "Win a Mystery Rankle puzzle.",
-  },
-  {
-    emoji: "🔥",
-    name: "Streak Master",
-    requirement: "Reach a 7-day winning streak.",
-  },
+  { emoji: "🎵", name: "Album Expert", requirement: "Win 5 Music puzzles." },
   {
     emoji: "🏆",
-    name: "Perfect Rankler",
-    requirement: "Solve a puzzle in 1 guess.",
+    name: "Franchise Fan",
+    requirement: "Win 5 Sports Teams puzzles.",
   },
+  { emoji: "❓", name: "Mystery Solver", requirement: "Win Mystery Rankle." },
+  { emoji: "🔥", name: "Streak Master", requirement: "Reach a 7-day streak." },
+  { emoji: "🏆", name: "Perfect Rankler", requirement: "Solve in 1 guess." },
 ];
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-transparent text-slate-900">
+    <RanklePageBackground>
       <div className="mx-auto max-w-5xl px-4 py-6 md:px-6">
         <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 px-6 py-8 text-center shadow-lg shadow-slate-300/40 backdrop-blur-sm">
           <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">
@@ -111,6 +109,13 @@ export default function AboutPage() {
             >
               View Achievements
             </Link>
+
+            <Link
+              href="/settings"
+              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+            >
+              Settings
+            </Link>
           </div>
         </header>
 
@@ -119,6 +124,7 @@ export default function AboutPage() {
             <div className="text-xs font-black uppercase tracking-[0.28em] text-emerald-700">
               Rules
             </div>
+
             <h2 className="mt-2 text-3xl font-black text-slate-950">
               The Basics
             </h2>
@@ -151,13 +157,15 @@ export default function AboutPage() {
             <div className="text-xs font-black uppercase tracking-[0.28em] text-blue-700">
               Data Sources
             </div>
+
             <h2 className="mt-2 text-3xl font-black text-slate-950">
               Where the puzzles come from
             </h2>
+
             <p className="mt-2 max-w-2xl text-slate-600">
-              Rankle uses public data sources to build daily puzzles. Release
-              dates and years may vary by region or source, so Rankle uses the
-              date returned by the selected data source for that puzzle.
+              Rankle uses public data sources and curated lists to build daily
+              puzzles. Release dates and years may vary by source, region, or
+              franchise history rules.
             </p>
           </div>
 
@@ -190,12 +198,13 @@ export default function AboutPage() {
             <div className="text-xs font-black uppercase tracking-[0.28em] text-purple-700">
               Badges
             </div>
+
             <h2 className="mt-2 text-3xl font-black text-slate-950">
               Achievements
             </h2>
+
             <p className="mx-auto mt-2 max-w-2xl text-slate-600">
-              Badges reward wins, streaks, and perfect solves. Unlock them as
-              you play daily Rankle puzzles.
+              Badges reward wins, streaks, category mastery, and perfect solves.
             </p>
           </div>
 
@@ -230,10 +239,10 @@ export default function AboutPage() {
           </Link>
         </section>
 
-        <footer className="py-8 text-center text-xs text-slate-500">
+        <footer className="py-8 text-center text-xs font-bold text-[#d8c7a3]">
           Rankle Games is a fan-made daily ranking game.
         </footer>
       </div>
-    </main>
+    </RanklePageBackground>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import RanklePageBackground from "@/components/RanklePageBackground";
 
 type AchievementStats = {
   winsByTheme: {
@@ -392,7 +393,7 @@ export default function AchievementsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-transparent text-slate-900">
+    <RanklePageBackground>
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
         <header className="mb-6 rounded-3xl border border-slate-300/70 bg-[#f7f4ec]/90 px-6 py-8 text-center shadow-lg shadow-slate-300/40 backdrop-blur-sm">
           <div className="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">
@@ -573,10 +574,10 @@ export default function AchievementsPage() {
           )}
         </div>
 
-        <footer className="py-8 text-center text-xs text-slate-500">
+        <footer className="py-8 text-center text-xs font-bold text-[#d8c7a3]">
           Achievements are saved on this device using your browser storage.
         </footer>
       </div>
-    </main>
+    </RanklePageBackground>
   );
 }
