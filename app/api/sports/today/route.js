@@ -96,7 +96,6 @@ function makeTeamImage(team) {
   const emoji = getLeagueEmoji(team.league);
   const colors = getLeagueColor(team.league);
   const initials = getInitials(team.title);
-  const year = team.releaseDate.slice(0, 4);
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
@@ -113,17 +112,13 @@ function makeTeamImage(team) {
       <circle cx="150" cy="105" r="54" fill="rgba(255,255,255,0.7)" stroke="${colors.accent}" stroke-width="4"/>
       <text x="150" y="126" text-anchor="middle" font-size="58">${emoji}</text>
 
-      <text x="150" y="220" text-anchor="middle" font-size="52" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
+      <text x="150" y="235" text-anchor="middle" font-size="62" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
         ${initials}
       </text>
 
-      <rect x="82" y="250" width="136" height="42" rx="21" fill="rgba(255,255,255,0.65)" stroke="${colors.accent}" stroke-width="3"/>
-      <text x="150" y="279" text-anchor="middle" font-size="25" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
+      <rect x="72" y="275" width="156" height="48" rx="24" fill="rgba(255,255,255,0.65)" stroke="${colors.accent}" stroke-width="3"/>
+      <text x="150" y="307" text-anchor="middle" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
         ${team.league}
-      </text>
-
-      <text x="150" y="345" text-anchor="middle" font-size="34" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
-        ${year}
       </text>
     </svg>
   `;
