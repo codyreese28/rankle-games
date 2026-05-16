@@ -267,7 +267,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="-mt-8 grid gap-4 px-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <section className="mt-6 grid gap-4 px-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {categoryCards.map((card) => {
               const isActive = selectedGameKey === card.key;
 
