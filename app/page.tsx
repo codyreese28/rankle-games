@@ -14,6 +14,9 @@ const categories = {
     label: "MOVIES",
     emoji: "🎬",
     cardEmoji: "🎞️",
+    introTitle: "Movies",
+    introText: "Sort five movies from oldest to newest by release date.",
+    introDetail: "Movie puzzles use movie release dates.",
     description: "Rank movies by release date",
     apiPath: "/api/movies/today",
     storagePrefix: "rankle-movies",
@@ -26,6 +29,9 @@ const categories = {
     label: "VIDEO GAMES",
     emoji: "🎮",
     cardEmoji: "🎮",
+    introTitle: "Video Games",
+    introText: "Sort five video games from oldest to newest by release date.",
+    introDetail: "Video game puzzles use original release dates.",
     description: "Rank video games by release date",
     apiPath: "/api/games/today",
     storagePrefix: "rankle-video-games",
@@ -38,6 +44,9 @@ const categories = {
     label: "MUSIC",
     emoji: "🎵",
     cardEmoji: "💿",
+    introTitle: "Music",
+    introText: "Sort five albums from oldest to newest by release date.",
+    introDetail: "Music puzzles use album release years.",
     description: "Rank albums by release date",
     apiPath: "/api/music/today",
     storagePrefix: "rankle-music",
@@ -50,6 +59,11 @@ const categories = {
     label: "SPORTS TEAMS",
     emoji: "🏆",
     cardEmoji: "🏈🏀⚾",
+    introTitle: "Sports Teams",
+    introText:
+      "Sort NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.",
+    introDetail:
+      "Sports puzzles use franchise founding year or first season, not current city date.",
     description: "Rank sports teams by established date",
     apiPath: "/api/sports/today",
     storagePrefix: "rankle-sports",
@@ -62,6 +76,10 @@ const categories = {
     label: "MYSTERY RANKLE",
     emoji: "❓",
     cardEmoji: "🕵️",
+    introTitle: "Mystery Rankle",
+    introText:
+      "Sort a mixed set of movies, video games, albums, and sports teams from oldest to newest.",
+    introDetail: "Category hints are shown, but correct positions are not revealed.",
     description: "Rank a mix of movies, games, music & sports teams",
     apiPath: "/api/mystery/today",
     storagePrefix: "rankle-mystery",
@@ -76,6 +94,11 @@ const dailyChallenge = {
   label: "HARD DAILY CHALLENGE",
   emoji: "📅",
   cardEmoji: "🗓️",
+  introTitle: "Hard Daily Challenge",
+  introText:
+    "Sort a hard mixed puzzle from oldest to newest with no category hints shown.",
+  introDetail:
+    "This is separate from Mystery and uses movies, games, music, and sports teams.",
   description: "A new mixed challenge every day",
   apiPath: "/api/daily-challenge/today",
   storagePrefix: "rankle-daily-challenge",
@@ -110,6 +133,8 @@ const featureHighlights = [
 export default function HomePage() {
   const [selectedGameKey, setSelectedGameKey] =
     useState<SelectedGameKey>("movies");
+  const [introGameKey, setIntroGameKey] = useState<SelectedGameKey | null>(null);
+  const [hasStartedPuzzle, setHasStartedPuzzle] = useState(false);
 
   const gameSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -117,6 +142,13 @@ export default function HomePage() {
     selectedGameKey === "dailyChallenge"
       ? dailyChallenge
       : categories[selectedGameKey];
+
+  const introGame =
+    introGameKey === "dailyChallenge"
+      ? dailyChallenge
+      : introGameKey
+      ? categories[introGameKey]
+      : null;
 
   const categoryCards = [
     {
@@ -145,8 +177,23 @@ export default function HomePage() {
     },
   ];
 
-  function playCategory(key: SelectedGameKey) {
-    setSelectedGameKey(key);
+  function openCategoryIntro(key: SelectedGameKey) {
+    setIntroGameKey(key);
+    setHasStartedPuzzle(false);
+
+    setTimeout(() => {
+      gameSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  }
+
+  function startPuzzle() {
+    if (!introGameKey) return;
+
+    setSelectedGameKey(introGameKey);
+    setHasStartedPuzzle(true);
 
     setTimeout(() => {
       gameSectionRef.current?.scrollIntoView({
@@ -175,7 +222,10 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-[92rem] px-4 py-4 sm:px-6 lg:px-8">
           <header className="mb-8 rounded-[2rem] border border-white/30 bg-[#fff4dd]/95 px-5 py-4 shadow-2xl shadow-black/25 backdrop-blur-md">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <Link href="/" className="flex items-center justify-center md:justify-start">
+              <Link
+                href="/"
+                className="flex items-center justify-center md:justify-start"
+              >
                 <div className="flex items-center gap-3">
                   <Image
                     src="/icon.png"
@@ -222,7 +272,7 @@ export default function HomePage() {
             </div>
           </header>
 
-          <section className="relative overflow-hidden rounded-[2.5rem] border border-white/20 bg-[#fff4dd]/75 px-5 py-10 text-center shadow-2xl shadow-black/30 backdrop-blur-sm sm:px-8 lg:px-12">
+          <section className="relative overflow-hidden rounded-[2.5rem] border border-white/20 bg-[#fff4dd]/75 px-5 py-8 text-center shadow-2xl shadow-black/30 backdrop-blur-sm sm:px-8 lg:px-12">
             <div className="pointer-events-none absolute left-6 top-12 hidden text-8xl opacity-70 lg:block">
               🎬
             </div>
@@ -269,12 +319,12 @@ export default function HomePage() {
 
           <section className="mt-6 grid gap-4 px-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {categoryCards.map((card) => {
-              const isActive = selectedGameKey === card.key;
+              const isActive = introGameKey === card.key;
 
               return (
                 <button
                   key={card.key}
-                  onClick={() => playCategory(card.key)}
+                  onClick={() => openCategoryIntro(card.key)}
                   className={`group overflow-hidden rounded-[1.6rem] border text-left shadow-2xl shadow-black/30 transition hover:-translate-y-1 hover:shadow-black/40 ${
                     isActive
                       ? "border-emerald-300 ring-4 ring-emerald-300/50"
@@ -299,7 +349,7 @@ export default function HomePage() {
                     </p>
 
                     <div className="mt-5 rounded-2xl bg-emerald-700 px-5 py-3 text-center text-base font-black text-white shadow-lg shadow-emerald-900/30 transition group-hover:bg-emerald-600">
-                      Play Now
+                      Select
                     </div>
                   </div>
                 </button>
@@ -331,30 +381,112 @@ export default function HomePage() {
             ref={gameSectionRef}
             className="mt-8 rounded-[2rem] border border-white/30 bg-[#fff4dd]/95 p-3 shadow-2xl shadow-black/30 backdrop-blur-md sm:p-5"
           >
-            <div className="mb-5 flex flex-col gap-3 border-b border-slate-300/70 pb-5 text-center md:flex-row md:items-center md:justify-between md:text-left">
-              <div>
-                <div className="text-xs font-black uppercase tracking-[0.25em] text-emerald-700">
-                  Now Playing
+            {!introGame && !hasStartedPuzzle && (
+              <div className="rounded-[1.5rem] border border-slate-300 bg-[#f7f4ec]/90 p-8 text-center">
+                <div className="text-5xl">🎯</div>
+
+                <h2 className="mt-4 text-3xl font-black text-[#071b16]">
+                  Choose a Category
+                </h2>
+
+                <p className="mx-auto mt-3 max-w-2xl text-base font-bold text-slate-700">
+                  Pick one of the category cards above to preview the rules,
+                  then start the puzzle when you are ready.
+                </p>
+              </div>
+            )}
+
+            {introGame && !hasStartedPuzzle && (
+              <div className="rounded-[1.5rem] border border-slate-300 bg-[#f7f4ec]/90 p-6 text-center shadow-lg">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-emerald-300 bg-[#e4f3e9] text-5xl shadow-md">
+                  {introGame.emoji}
                 </div>
 
-                <h2 className="mt-1 text-3xl font-black text-[#071b16]">
-                  {selectedGame.emoji} {selectedGame.name}
+                <div className="mt-5 text-xs font-black uppercase tracking-[0.3em] text-emerald-700">
+                  Category Selected
+                </div>
+
+                <h2 className="mt-2 text-4xl font-black text-[#071b16] md:text-5xl">
+                  {introGame.introTitle}
                 </h2>
-              </div>
 
-              <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-800">
-                {selectedGame.accentLabel}
-              </div>
-            </div>
+                <p className="mx-auto mt-4 max-w-2xl text-lg font-bold leading-8 text-slate-800">
+                  {introGame.introText}
+                </p>
 
-            <RankleGame
-              key={selectedGameKey}
-              apiPath={selectedGame.apiPath}
-              storagePrefix={selectedGame.storagePrefix}
-              accentLabel={selectedGame.accentLabel}
-              theme={selectedGame.theme}
-              embedded
-            />
+                <div className="mx-auto mt-6 grid max-w-3xl gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
+                    <div className="text-3xl">🧩</div>
+                    <div className="mt-2 text-xl font-black text-[#071b16]">
+                      5 Items
+                    </div>
+                    <div className="mt-1 text-xs font-bold text-slate-600">
+                      Arrange the full board
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
+                    <div className="text-3xl">🎯</div>
+                    <div className="mt-2 text-xl font-black text-[#071b16]">
+                      3 Guesses
+                    </div>
+                    <div className="mt-1 text-xs font-bold text-slate-600">
+                      Make each guess count
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
+                    <div className="text-3xl">🔒</div>
+                    <div className="mt-2 text-xl font-black text-[#071b16]">
+                      Score Only
+                    </div>
+                    <div className="mt-1 text-xs font-bold text-slate-600">
+                      Correct spots stay hidden
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mx-auto mt-5 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
+                  {introGame.introDetail}
+                </p>
+
+                <button
+                  onClick={startPuzzle}
+                  className="mt-7 rounded-2xl bg-emerald-600 px-8 py-4 text-lg font-black text-white shadow-xl shadow-emerald-900/25 transition hover:bg-emerald-500 active:scale-[0.99]"
+                >
+                  Start Puzzle
+                </button>
+              </div>
+            )}
+
+            {hasStartedPuzzle && (
+              <>
+                <div className="mb-5 flex flex-col gap-3 border-b border-slate-300/70 pb-5 text-center md:flex-row md:items-center md:justify-between md:text-left">
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-[0.25em] text-emerald-700">
+                      Now Playing
+                    </div>
+
+                    <h2 className="mt-1 text-3xl font-black text-[#071b16]">
+                      {selectedGame.emoji} {selectedGame.name}
+                    </h2>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-800">
+                    {selectedGame.accentLabel}
+                  </div>
+                </div>
+
+                <RankleGame
+                  key={selectedGameKey}
+                  apiPath={selectedGame.apiPath}
+                  storagePrefix={selectedGame.storagePrefix}
+                  accentLabel={selectedGame.accentLabel}
+                  theme={selectedGame.theme}
+                  embedded
+                />
+              </>
+            )}
           </section>
 
           <footer className="py-8 text-center text-xs font-bold text-[#d8c7a3]">
