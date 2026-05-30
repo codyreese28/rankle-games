@@ -232,7 +232,11 @@ function SortableCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex items-center gap-3 rounded-3xl border ${themeClasses.border} bg-white/70 px-3 py-2 shadow-sm transition-all duration-500 sm:gap-4 sm:px-4 sm:py-3 ${
+      className={`group flex items-center gap-3 rounded-3xl border px-3 py-2 shadow-md transition-all duration-300 sm:gap-4 sm:px-4 sm:py-3 ${
+        isDragging
+          ? "scale-[1.03] border-emerald-400 bg-emerald-50 shadow-2xl shadow-emerald-300/70 ring-4 ring-emerald-300"
+          : `${themeClasses.border} bg-white/70 shadow-slate-300/40 ${themeClasses.cardHover}`
+      } ${
         animationsEnabled ? "animate-rankle-card-reveal opacity-0" : ""
       } ${
         gameOver ? "cursor-default" : "cursor-grab active:cursor-grabbing"
@@ -1612,14 +1616,14 @@ const achievementUnlockedModal =
       }
     >
       <header
-        className={`mb-5 rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 text-center shadow-[0_10px_30px_rgba(15,23,42,0.08)]`}
+        className={`mb-5 rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-3 text-center shadow-[0_10px_30px_rgba(15,23,42,0.08)] xl:p-4`}
       >
         <div
           className="text-xs font-black uppercase tracking-[0.35em] text-slate-700"
         >
           Rankle Games
         </div>
-        <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">
           {puzzle.title} #{puzzleNumber}
         </h1>
         <p className="mt-2 text-sm font-semibold text-slate-500">
@@ -1629,7 +1633,7 @@ const achievementUnlockedModal =
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_380px] lg:items-start">
         <section
-          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)]`}
+          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] xl:p-4`}
         >
           <div className="mb-4">
             <div
@@ -1638,7 +1642,7 @@ const achievementUnlockedModal =
               {accentLabel}
             </div>
 
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900">
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 xl:text-3xl">
               Arrange the list
             </h2>
 
@@ -1673,7 +1677,7 @@ const achievementUnlockedModal =
         </section>
 
         <aside
-          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-5 shadow-lg ${themeClasses.glow} lg:sticky lg:top-6`}
+          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-3 shadow-lg ${themeClasses.glow} lg:sticky lg:top-6 xl:p-4`}
         >
           <div className="mb-5">
             <div
@@ -1682,7 +1686,7 @@ const achievementUnlockedModal =
               How to Play
             </div>
 
-            <h3 className="mt-3 text-2xl font-black text-slate-900">
+            <h3 className="mt-3 text-xl font-black text-slate-900 xl:text-2xl">
               {puzzle.challenge}
             </h3>
 
@@ -1691,24 +1695,53 @@ const achievementUnlockedModal =
               <span className="font-black text-slate-900">3 guesses</span>.
             </p>
 
-            <div className="mt-5 rounded-3xl border border-slate-200 bg-white/60 p-4 text-center">
+            <div className="mt-5 rounded-3xl border border-slate-200 bg-white/60 p-3 text-center xl:p-4">
               <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
                 Next Puzzle
               </div>
 
-              <div className="mt-2 text-4xl font-black tracking-tight text-slate-900">
+              <div className="mt-2 text-3xl font-black tracking-tight text-slate-900 xl:text-4xl">
                 {timeUntilNextPuzzle}
               </div>
             </div>
           </div>
 
-          <div className="mb-5 rounded-3xl border border-slate-200 bg-white/60 p-4 text-center">
+          <div className="mb-5 rounded-3xl border border-slate-200 bg-white/60 p-3 text-center xl:p-4">
             <div className="text-sm font-semibold text-slate-600">
               After each guess, you will only see how many are correct.
             </div>
             <div className="mt-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
               Correct positions are not revealed.
             </div>
+          </div>
+
+          <div
+            className={`mb-5 rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-center xl:p-4`}
+          >
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              Guesses Used
+            </div>
+
+            <div className="mt-3 flex justify-center gap-2">
+              {[0, 1, 2].map((guessSlot) => (
+                <div
+                  key={guessSlot}
+                  className={`h-4 w-4 rounded-full border ${
+                    guessSlot < guesses.length
+                      ? "border-emerald-500 bg-emerald-500"
+                      : "border-slate-300 bg-white/70"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className={`mt-3 text-2xl font-black ${themeClasses.accentText}`}>
+              {guesses.length}/3
+            </div>
+
+            <p className="mt-1 text-xs font-bold text-slate-500">
+              {3 - guesses.length} guesses remaining
+            </p>
           </div>
 
           {!gameOver && (
@@ -1739,13 +1772,27 @@ const achievementUnlockedModal =
           </button>
 
           {message && (
-            <p
-              className={`mt-4 rounded-2xl border ${themeClasses.border} ${
-                isRevealingAnswer ? themeClasses.accentPill : themeClasses.card
-              } p-3 text-center text-sm font-bold text-slate-700`}
+            <div
+              className={`mt-4 rounded-2xl border-2 ${
+                isRevealingAnswer
+                  ? `${themeClasses.accentBorder} ${themeClasses.accentPill}`
+                  : "border-emerald-400 bg-emerald-50"
+              } p-4 text-center shadow-lg`}
             >
-              {message}
-            </p>
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                Latest Guess
+              </div>
+
+              <div className="mt-1 text-2xl font-black text-emerald-900">
+                {message}
+              </div>
+
+              {!gameOver && (
+                <div className="mt-1 text-sm font-bold text-slate-600">
+                  Guess {guesses.length} of 3 submitted
+                </div>
+              )}
+            </div>
           )}
 
           {guesses.length > 0 && (
