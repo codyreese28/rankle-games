@@ -37,93 +37,55 @@ function getLeagueEmoji(league) {
   return "🏆";
 }
 
-function getLeagueColor(league) {
-  if (league === "NFL") {
-    return {
-      start: "#dbeafe",
-      end: "#93c5fd",
-      text: "#1e3a8a",
-      accent: "#2563eb",
-    };
-  }
-
-  if (league === "NBA") {
-    return {
-      start: "#ffedd5",
-      end: "#fdba74",
-      text: "#7c2d12",
-      accent: "#ea580c",
-    };
-  }
-
-  if (league === "NHL") {
-    return {
-      start: "#e0f2fe",
-      end: "#7dd3fc",
-      text: "#0c4a6e",
-      accent: "#0284c7",
-    };
-  }
-
-  if (league === "MLB") {
-    return {
-      start: "#dcfce7",
-      end: "#86efac",
-      text: "#14532d",
-      accent: "#16a34a",
-    };
-  }
-
-  return {
-    start: "#f8fafc",
-    end: "#cbd5e1",
-    text: "#0f172a",
-    accent: "#64748b",
-  };
+function getLeaguePath(league) {
+  if (league === "NFL") return "nfl";
+  if (league === "NBA") return "nba";
+  if (league === "NHL") return "nhl";
+  if (league === "MLB") return "mlb";
+  return "";
 }
 
-function getInitials(teamName) {
-  return teamName
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 3)
-    .toUpperCase();
+function getTeamLogoUrl(team) {
+  const leaguePath = getLeaguePath(team.league);
+
+  if (!leaguePath || !team.espnId) return null;
+
+  return `https://a.espncdn.com/i/teamlogos/${leaguePath}/500/${team.espnId}.png`;
 }
 
-function makeTeamImage(team) {
+function makeFallbackLogo(team) {
   const emoji = getLeagueEmoji(team.league);
-  const colors = getLeagueColor(team.league);
-  const initials = getInitials(team.title);
 
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="${colors.start}"/>
-          <stop offset="100%" stop-color="${colors.end}"/>
-        </linearGradient>
-      </defs>
-
-      <rect width="300" height="420" rx="36" fill="url(#bg)"/>
-      <rect x="18" y="18" width="264" height="384" rx="28" fill="rgba(255,255,255,0.35)" stroke="${colors.accent}" stroke-width="4"/>
-
-      <circle cx="150" cy="105" r="54" fill="rgba(255,255,255,0.7)" stroke="${colors.accent}" stroke-width="4"/>
-      <text x="150" y="126" text-anchor="middle" font-size="58">${emoji}</text>
-
-      <text x="150" y="235" text-anchor="middle" font-size="62" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
-        ${initials}
-      </text>
-
-      <rect x="72" y="275" width="156" height="48" rx="24" fill="rgba(255,255,255,0.65)" stroke="${colors.accent}" stroke-width="3"/>
-      <text x="150" y="307" text-anchor="middle" font-size="27" font-family="Arial, Helvetica, sans-serif" font-weight="900" fill="${colors.text}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+      <rect width="200" height="200" rx="40" fill="#f8fafc"/>
+      <circle cx="100" cy="85" r="48" fill="#e2e8f0"/>
+      <text x="100" y="105" text-anchor="middle" font-size="52">${emoji}</text>
+      <text
+        x="100"
+        y="155"
+        text-anchor="middle"
+        font-size="18"
+        font-family="Arial, Helvetica, sans-serif"
+        font-weight="700"
+        fill="#0f172a"
+      >
         ${team.league}
       </text>
     </svg>
   `;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function makeTeamItem(team) {
+  const logoUrl = getTeamLogoUrl(team);
+
+  return {
+    id: team.id,
+    title: `${getLeagueEmoji(team.league)} ${team.title}`,
+    image: logoUrl || makeFallbackLogo(team),
+  };
 }
 
 export async function GET() {
@@ -149,17 +111,15 @@ export async function GET() {
       new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime()
   );
 
+  const items = selectedTeams.map((team) => makeTeamItem(team));
+
   return Response.json({
     date: today,
     gameType: "sports",
     title: "Rankle Sports Teams",
     challenge:
       "Sort these NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.",
-    items: selectedTeams.map((team) => ({
-      id: team.id,
-      title: `${getLeagueEmoji(team.league)} ${team.title}`,
-      image: makeTeamImage(team),
-    })),
+    items,
     answer: correctOrder.map((team) => ({
       id: team.id,
       title: `${getLeagueEmoji(team.league)} ${team.title}`,

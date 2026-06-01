@@ -284,6 +284,8 @@ export default function RankleGame({
   const [guesses, setGuesses] = useState<string[][]>([]);
   const [message, setMessage] = useState("");
   const [nickname, setNickname] = useState("");
+  const [hintUsed, setHintUsed] = useState(false);
+  const [hintText, setHintText] = useState("");
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
@@ -315,6 +317,8 @@ export default function RankleGame({
     setItems([]);
     setGuesses([]);
     setMessage("");
+    setHintUsed(false);
+    setHintText("");
     setGameOver(false);
     setWon(false);
     setIsRevealingAnswer(false);
@@ -342,8 +346,17 @@ export default function RankleGame({
 
         const storageKey = `${storagePrefix}-${data.date}`;
         const savedGame = localStorage.getItem(storageKey);
+        const savedHint = localStorage.getItem(`${storageKey}-hint`);
 
         setPuzzle(data);
+
+        if (savedHint) {
+          setHintUsed(true);
+          setHintText(savedHint);
+        } else {
+          setHintUsed(false);
+          setHintText("");
+        }
 
         if (savedGame) {
           try {
@@ -660,7 +673,8 @@ export default function RankleGame({
       winsByTheme: nextWinsByTheme,
       currentStreak: nextCurrentStreak,
       bestStreak: Math.max(currentStats.bestStreak, nextCurrentStreak),
-      perfectGames: currentStats.perfectGames + (guessCount === 1 ? 1 : 0),
+      perfectGames:
+        currentStats.perfectGames + (guessCount === 1 && !hintUsed ? 1 : 0),
       lastWinDate: puzzle.date,
     };
 
@@ -865,7 +879,8 @@ export default function RankleGame({
       currentStreak: newCurrentStreak,
       bestStreak: Math.max(currentStats.bestStreak, newCurrentStreak),
       perfectGames:
-        currentStats.perfectGames + (didWin && guessCount === 1 ? 1 : 0),
+        currentStats.perfectGames +
+        (didWin && guessCount === 1 && !hintUsed ? 1 : 0),
       guessDistribution: {
         one:
           currentStats.guessDistribution.one +
@@ -945,10 +960,15 @@ export default function RankleGame({
   function resetToday() {
     if (!puzzle) return;
 
-    localStorage.removeItem(`${storagePrefix}-${puzzle.date}`);
+    const storageKey = `${storagePrefix}-${puzzle.date}`;
+
+    localStorage.removeItem(storageKey);
+    localStorage.removeItem(`${storageKey}-hint`);
     setItems(puzzle.items);
     setGuesses([]);
     setMessage("");
+    setHintUsed(false);
+    setHintText("");
     setGameOver(false);
     setWon(false);
     setIsRevealingAnswer(false);
@@ -982,6 +1002,23 @@ export default function RankleGame({
     return nickname.trim() || "You";
   }
 
+  function useHint() {
+    if (!puzzle || hintUsed || gameOver) return;
+
+    const oldestItem = puzzle.answer[0];
+
+    if (!oldestItem) return;
+
+    const text = `The oldest item is: ${oldestItem.title}`;
+    const storageKey = `${storagePrefix}-${puzzle.date}`;
+
+    setHintUsed(true);
+    setHintText(text);
+
+    localStorage.setItem(`${storageKey}-hint`, text);
+    setMessage("Hint used. Rankle IQ penalty applied.");
+  }
+
   function getRankleIQ() {
     if (!puzzle || guesses.length === 0) return 0;
 
@@ -1010,7 +1047,11 @@ export default function RankleGame({
       score += 50;
     }
 
-    return Math.min(score, 1100);
+    if (hintUsed) {
+      score -= 100;
+    }
+
+    return Math.max(Math.min(score, 1100), 0);
   }
 
   function getEndGameRecap() {
@@ -1063,6 +1104,7 @@ export default function RankleGame({
       `${getPlayerName()} ${won ? "solved it" : "did not solve it"}`,
       won ? `✅ Solved in ${guesses.length}/3` : "❌ Failed",
       `🧠 Rankle IQ: ${getRankleIQ()}`,
+      hintUsed ? "💡 Hint Used" : "💡 No Hint Used",
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
       "",
@@ -1255,7 +1297,7 @@ const finalModal = showFinalModal && puzzle && (
           : "You used all 3 guesses."}
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid gap-3 sm:grid-cols-5">
         <div className={`rounded-2xl ${themeClasses.card} p-4`}>
           <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
             Result
@@ -1289,6 +1331,19 @@ const finalModal = showFinalModal && puzzle && (
           </div>
           <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
             {rankleIQ}
+          </div>
+        </div>
+
+        <div className={`rounded-2xl ${themeClasses.card} p-4`}>
+          <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+            Hint
+          </div>
+          <div
+            className={`mt-2 text-2xl font-black ${
+              hintUsed ? "text-amber-700" : themeClasses.accentText
+            }`}
+          >
+            {hintUsed ? "Used" : "None"}
           </div>
         </div>
       </div>
@@ -1742,6 +1797,44 @@ const achievementUnlockedModal =
             <p className="mt-1 text-xs font-bold text-slate-500">
               {3 - guesses.length} guesses remaining
             </p>
+          </div>
+
+          <div
+            className={`mb-5 rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center`}
+          >
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              Hint
+            </div>
+
+            {hintText ? (
+              <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+                  Hint Used
+                </div>
+
+                <p className="mt-2 text-sm font-black text-slate-800">
+                  {hintText}
+                </p>
+
+                <p className="mt-2 text-xs font-bold text-slate-500">
+                  Rankle IQ -100 • Perfect game disabled
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="mt-2 text-sm font-semibold text-slate-600">
+                  Reveal the oldest item. Using a hint lowers Rankle IQ by 100.
+                </p>
+
+                <button
+                  onClick={useHint}
+                  disabled={hintUsed || gameOver}
+                  className="mt-3 w-full rounded-2xl border border-amber-300 bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Use Hint
+                </button>
+              </>
+            )}
           </div>
 
           {!gameOver && (
