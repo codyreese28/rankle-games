@@ -119,6 +119,7 @@ type SortableCardProps = {
   gameOver: boolean;
   themeClasses: ThemeClasses;
   animationsEnabled: boolean;
+  theme: ThemeName;
 };
 
 const themes: Record<ThemeName, ThemeClasses> = {
@@ -205,6 +206,7 @@ function SortableCard({
   gameOver,
   themeClasses,
   animationsEnabled,
+  theme,
 }: SortableCardProps) {
   const {
     attributes,
@@ -249,7 +251,9 @@ function SortableCard({
       <img
         src={item.image}
         alt={item.title}
-        className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-slate-300 sm:h-20 sm:w-20"
+        className={`h-16 w-16 shrink-0 rounded-2xl shadow-md ring-1 ring-slate-300 sm:h-20 sm:w-20 ${
+          theme === "sports" ? "bg-white object-contain p-2" : "object-cover"
+        }`}
       />
 
       <div className="min-w-0 flex-1">
@@ -1724,6 +1728,7 @@ const achievementUnlockedModal =
                     gameOver={gameOver}
                     themeClasses={themeClasses}
                     animationsEnabled={animationsEnabled}
+                    theme={theme}
                   />
                 ))}
               </div>
