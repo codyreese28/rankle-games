@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
   function resetDailyGameProgress() {
     const confirmed = window.confirm(
-      "Reset saved daily game progress on this device? This will not reset achievements."
+      "Reset saved daily game progress and used hints on this device? This will not reset achievements."
     );
 
     if (!confirmed) return;
@@ -77,7 +77,7 @@ export default function SettingsPage() {
 
     keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-    setMessage("Saved daily game progress has been reset.");
+    setMessage("Saved daily game progress and used hints have been reset.");
   }
 
   function resetAchievements() {
@@ -146,6 +146,13 @@ export default function SettingsPage() {
               className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
             >
               Achievements
+            </Link>
+
+            <Link
+              href="/archive"
+              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+            >
+              Archive
             </Link>
 
             <Link

@@ -74,6 +74,8 @@ type Achievement = {
   progress: string;
 };
 
+type HintType = "oldest" | "newest" | "decade";
+
 type RankleStats = {
   gamesPlayed: number;
   wins: number;
@@ -290,6 +292,8 @@ export default function RankleGame({
   const [nickname, setNickname] = useState("");
   const [hintUsed, setHintUsed] = useState(false);
   const [hintText, setHintText] = useState("");
+  const [hintType, setHintType] = useState<HintType | "">("");
+  const [hintPenalty, setHintPenalty] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [isRevealingAnswer, setIsRevealingAnswer] = useState(false);
@@ -323,6 +327,8 @@ export default function RankleGame({
     setMessage("");
     setHintUsed(false);
     setHintText("");
+    setHintType("");
+    setHintPenalty(0);
     setGameOver(false);
     setWon(false);
     setIsRevealingAnswer(false);
@@ -355,11 +361,28 @@ export default function RankleGame({
         setPuzzle(data);
 
         if (savedHint) {
-          setHintUsed(true);
-          setHintText(savedHint);
+          try {
+            const parsedHint = JSON.parse(savedHint) as {
+              text?: string;
+              type?: string;
+              penalty?: number;
+            };
+
+            setHintUsed(true);
+            setHintText(parsedHint.text || savedHint);
+            setHintType(normalizeHintType(parsedHint.type) || "oldest");
+            setHintPenalty(parsedHint.penalty || 100);
+          } catch {
+            setHintUsed(true);
+            setHintText(savedHint);
+            setHintType("oldest");
+            setHintPenalty(100);
+          }
         } else {
           setHintUsed(false);
           setHintText("");
+          setHintType("");
+          setHintPenalty(0);
         }
 
         if (savedGame) {
@@ -973,6 +996,8 @@ export default function RankleGame({
     setMessage("");
     setHintUsed(false);
     setHintText("");
+    setHintType("");
+    setHintPenalty(0);
     setGameOver(false);
     setWon(false);
     setIsRevealingAnswer(false);
@@ -1006,20 +1031,66 @@ export default function RankleGame({
     return nickname.trim() || "You";
   }
 
-  function useHint() {
+  function normalizeHintType(value?: string): HintType | "" {
+    if (value === "oldest" || value === "Oldest Item") return "oldest";
+    if (value === "newest" || value === "Newest Item") return "newest";
+    if (value === "decade" || value === "Item Decade") return "decade";
+
+    return "";
+  }
+
+  function getHintLabel(type: HintType | "") {
+    if (type === "oldest") return "Oldest Item";
+    if (type === "newest") return "Newest Item";
+    if (type === "decade") return "Item Decade";
+
+    return "Oldest Item";
+  }
+
+  function useHint(type: HintType) {
     if (!puzzle || hintUsed || gameOver) return;
 
-    const oldestItem = puzzle.answer[0];
-
-    if (!oldestItem) return;
-
-    const text = `The oldest item is: ${oldestItem.title}`;
+    let text = "";
+    let penalty = 100;
     const storageKey = `${storagePrefix}-${puzzle.date}`;
+
+    if (type === "oldest") {
+      const oldestItem = puzzle.answer[0];
+      if (!oldestItem) return;
+
+      text = `The oldest item is: ${oldestItem.title}`;
+      penalty = 100;
+    }
+
+    if (type === "newest") {
+      const newestItem = puzzle.answer[puzzle.answer.length - 1];
+      if (!newestItem) return;
+
+      text = `The newest item is: ${newestItem.title}`;
+      penalty = 100;
+    }
+
+    if (type === "decade") {
+      const randomItem =
+        puzzle.answer[Math.floor(Math.random() * puzzle.answer.length)];
+      if (!randomItem) return;
+
+      const year = Number(randomItem.releaseDate.slice(0, 4));
+      const decade = `${Math.floor(year / 10) * 10}s`;
+
+      text = `${randomItem.title} was released/founded in the ${decade}.`;
+      penalty = 50;
+    }
 
     setHintUsed(true);
     setHintText(text);
+    setHintType(type);
+    setHintPenalty(penalty);
 
-    localStorage.setItem(`${storageKey}-hint`, text);
+    localStorage.setItem(
+      `${storageKey}-hint`,
+      JSON.stringify({ text, type, penalty })
+    );
     setMessage("Hint used. Rankle IQ penalty applied.");
   }
 
@@ -1052,7 +1123,7 @@ export default function RankleGame({
     }
 
     if (hintUsed) {
-      score -= 100;
+      score -= hintPenalty || 100;
     }
 
     return Math.max(Math.min(score, 1100), 0);
@@ -1108,7 +1179,8 @@ export default function RankleGame({
       `${getPlayerName()} ${won ? "solved it" : "did not solve it"}`,
       won ? `✅ Solved in ${guesses.length}/3` : "❌ Failed",
       `🧠 Rankle IQ: ${getRankleIQ()}`,
-      hintUsed ? "💡 Hint Used" : "💡 No Hint Used",
+      hintUsed ? `💡 Hint Used: ${getHintLabel(hintType)}` : "💡 No Hint Used",
+      ...(hintUsed ? [`Rankle IQ -${hintPenalty || 100}`] : []),
       "",
       ...guesses.map((row, index) => `Guess ${index + 1}: ${row[0]}`),
       "",
@@ -1347,8 +1419,13 @@ const finalModal = showFinalModal && puzzle && (
               hintUsed ? "text-amber-700" : themeClasses.accentText
             }`}
           >
-            {hintUsed ? "Used" : "None"}
+            {hintUsed ? getHintLabel(hintType) : "None"}
           </div>
+          {hintUsed && (
+            <div className="mt-1 text-xs font-bold text-slate-500">
+              Rankle IQ -{hintPenalty || 100}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1814,7 +1891,7 @@ const achievementUnlockedModal =
             {hintText ? (
               <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
                 <div className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
-                  Hint Used
+                  Hint Used: {getHintLabel(hintType)}
                 </div>
 
                 <p className="mt-2 text-sm font-black text-slate-800">
@@ -1822,22 +1899,43 @@ const achievementUnlockedModal =
                 </p>
 
                 <p className="mt-2 text-xs font-bold text-slate-500">
-                  Rankle IQ -100 • Perfect game disabled
+                  Rankle IQ -{hintPenalty || 100} - Perfect game disabled
                 </p>
               </div>
             ) : (
               <>
                 <p className="mt-2 text-sm font-semibold text-slate-600">
-                  Reveal the oldest item. Using a hint lowers Rankle IQ by 100.
+                  Choose one hint. Stronger hints cost more Rankle IQ.
                 </p>
 
-                <button
-                  onClick={useHint}
-                  disabled={hintUsed || gameOver}
-                  className="mt-3 w-full rounded-2xl border border-amber-300 bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Use Hint
-                </button>
+                <div className="mt-3 space-y-2">
+                  <button
+                    onClick={() => useHint("oldest")}
+                    disabled={hintUsed || gameOver}
+                    className="w-full rounded-2xl border border-amber-300 bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Reveal Oldest Item
+                    <span className="ml-2 text-xs font-black">-100 IQ</span>
+                  </button>
+
+                  <button
+                    onClick={() => useHint("newest")}
+                    disabled={hintUsed || gameOver}
+                    className="w-full rounded-2xl border border-orange-300 bg-orange-400 px-4 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Reveal Newest Item
+                    <span className="ml-2 text-xs font-black">-100 IQ</span>
+                  </button>
+
+                  <button
+                    onClick={() => useHint("decade")}
+                    disabled={hintUsed || gameOver}
+                    className="w-full rounded-2xl border border-sky-300 bg-sky-300 px-4 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Reveal One Item&apos;s Decade
+                    <span className="ml-2 text-xs font-black">-50 IQ</span>
+                  </button>
+                </div>
               </>
             )}
           </div>

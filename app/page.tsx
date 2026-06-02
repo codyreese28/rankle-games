@@ -7,6 +7,7 @@ import RankleGame from "@/components/RankleGame";
 
 type CategoryKey = "movies" | "games" | "music" | "mystery" | "sports";
 type SelectedGameKey = CategoryKey | "dailyChallenge";
+type SportsLeagueFilter = "ALL" | "NFL" | "NBA" | "NHL" | "MLB";
 
 const categories = {
   movies: {
@@ -79,7 +80,8 @@ const categories = {
     introTitle: "Mystery Rankle",
     introText:
       "Sort a mixed set of movies, video games, albums, and sports teams from oldest to newest.",
-    introDetail: "Category hints are shown, but correct positions are not revealed.",
+    introDetail:
+      "Category hints are shown, but correct positions are not revealed.",
     description: "Rank a mix of movies, games, music & sports teams",
     apiPath: "/api/mystery/today",
     storagePrefix: "rankle-mystery",
@@ -130,22 +132,106 @@ const featureHighlights = [
   },
 ];
 
+const sportsLeagueFilters: {
+  label: string;
+  value: SportsLeagueFilter;
+  emoji: string;
+}[] = [
+  {
+    label: "All Sports",
+    value: "ALL",
+    emoji: "🏆",
+  },
+  {
+    label: "NFL",
+    value: "NFL",
+    emoji: "🏈",
+  },
+  {
+    label: "NBA",
+    value: "NBA",
+    emoji: "🏀",
+  },
+  {
+    label: "NHL",
+    value: "NHL",
+    emoji: "🏒",
+  },
+  {
+    label: "MLB",
+    value: "MLB",
+    emoji: "⚾",
+  },
+];
+
+function getSportsApiPath(league: SportsLeagueFilter) {
+  if (league === "ALL") return "/api/sports/today";
+
+  return `/api/sports/today?league=${league}`;
+}
+
+function getSportsStoragePrefix(league: SportsLeagueFilter) {
+  if (league === "ALL") return "rankle-sports";
+
+  return `rankle-sports-${league.toLowerCase()}`;
+}
+
+function getSportsAccentLabel(league: SportsLeagueFilter) {
+  if (league === "ALL") return "Daily Sports Team Sort";
+
+  return `Daily ${league} Team Sort`;
+}
+
+function getSportsName(league: SportsLeagueFilter) {
+  if (league === "ALL") return "Sports Teams";
+
+  return `${league} Teams`;
+}
+
+function getSportsIntroText(league: SportsLeagueFilter) {
+  if (league === "ALL") {
+    return "Sort NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.";
+  }
+
+  return `Sort five ${league} teams from oldest to newest by franchise founding year.`;
+}
+
 export default function HomePage() {
   const [selectedGameKey, setSelectedGameKey] =
     useState<SelectedGameKey>("movies");
   const [introGameKey, setIntroGameKey] = useState<SelectedGameKey | null>(null);
   const [hasStartedPuzzle, setHasStartedPuzzle] = useState(false);
+  const [sportsLeagueFilter, setSportsLeagueFilter] =
+    useState<SportsLeagueFilter>("ALL");
 
   const gameSectionRef = useRef<HTMLDivElement | null>(null);
 
   const selectedGame =
     selectedGameKey === "dailyChallenge"
       ? dailyChallenge
+      : selectedGameKey === "sports"
+      ? {
+          ...categories.sports,
+          name: getSportsName(sportsLeagueFilter),
+          introText: getSportsIntroText(sportsLeagueFilter),
+          apiPath: getSportsApiPath(sportsLeagueFilter),
+          storagePrefix: getSportsStoragePrefix(sportsLeagueFilter),
+          accentLabel: getSportsAccentLabel(sportsLeagueFilter),
+        }
       : categories[selectedGameKey];
 
   const introGame =
     introGameKey === "dailyChallenge"
       ? dailyChallenge
+      : introGameKey === "sports"
+      ? {
+          ...categories.sports,
+          name: getSportsName(sportsLeagueFilter),
+          introText: getSportsIntroText(sportsLeagueFilter),
+          apiPath: getSportsApiPath(sportsLeagueFilter),
+          storagePrefix: getSportsStoragePrefix(sportsLeagueFilter),
+          accentLabel: getSportsAccentLabel(sportsLeagueFilter),
+        }
       : introGameKey
       ? categories[introGameKey]
       : null;
@@ -187,6 +273,11 @@ export default function HomePage() {
         block: "start",
       });
     }, 100);
+  }
+
+  function selectSportsLeague(league: SportsLeagueFilter) {
+    setSportsLeagueFilter(league);
+    setHasStartedPuzzle(false);
   }
 
   function startPuzzle() {
@@ -260,6 +351,13 @@ export default function HomePage() {
                   className="rounded-2xl px-3 py-2 transition hover:bg-emerald-100"
                 >
                   🏆 Achievements
+                </Link>
+
+                <Link
+                  href="/archive"
+                  className="rounded-2xl px-3 py-2 transition hover:bg-emerald-100"
+                >
+                  📅 Archive
                 </Link>
 
                 <Link
@@ -414,6 +512,39 @@ export default function HomePage() {
                   {introGame.introText}
                 </p>
 
+                {introGameKey === "sports" && (
+                  <div className="mx-auto mt-6 max-w-3xl rounded-3xl border border-slate-300 bg-[#ece8df] p-4">
+                    <div className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+                      Choose League
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-5">
+                      {sportsLeagueFilters.map((league) => {
+                        const isSelected = sportsLeagueFilter === league.value;
+
+                        return (
+                          <button
+                            key={league.value}
+                            onClick={() => selectSportsLeague(league.value)}
+                            className={`rounded-2xl border px-3 py-3 text-sm font-black transition active:scale-[0.99] ${
+                              isSelected
+                                ? "border-emerald-400 bg-emerald-500 text-white shadow-lg shadow-emerald-700/25"
+                                : "border-slate-300 bg-[#f7f4ec] text-slate-700 hover:border-emerald-400 hover:bg-[#e4f3e9] hover:text-emerald-800"
+                            }`}
+                          >
+                            <div className="text-2xl">{league.emoji}</div>
+                            <div className="mt-1">{league.label}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <p className="mt-3 text-xs font-bold text-slate-500">
+                      Each league filter has its own daily puzzle progress.
+                    </p>
+                  </div>
+                )}
+
                 <div className="mx-auto mt-6 grid max-w-3xl gap-3 md:grid-cols-3">
                   <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
                     <div className="text-3xl">🧩</div>
@@ -478,7 +609,7 @@ export default function HomePage() {
                 </div>
 
                 <RankleGame
-                  key={selectedGameKey}
+                  key={`${selectedGameKey}-${sportsLeagueFilter}`}
                   apiPath={selectedGame.apiPath}
                   storagePrefix={selectedGame.storagePrefix}
                   accentLabel={selectedGame.accentLabel}

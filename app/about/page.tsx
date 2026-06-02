@@ -111,6 +111,13 @@ export default function AboutPage() {
             </Link>
 
             <Link
+              href="/archive"
+              className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+            >
+              Archive
+            </Link>
+
+            <Link
               href="/settings"
               className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
             >

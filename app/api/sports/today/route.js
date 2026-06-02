@@ -88,19 +88,66 @@ function makeTeamItem(team) {
   };
 }
 
-export async function GET() {
-  const today = getTodayDateKey();
+function getLeagueFilter(request) {
+  const url = new URL(request.url);
+  const league = url.searchParams.get("league")?.toUpperCase();
 
-  const selectedTeams = shuffleWithSeed(sportsTeams, `sports-${today}`).slice(
-    0,
-    5
-  );
+  const allowedLeagues = ["NFL", "NBA", "NHL", "MLB"];
+
+  if (!league) return null;
+
+  if (!allowedLeagues.includes(league)) {
+    return "INVALID";
+  }
+
+  return league;
+}
+
+function getPuzzleTitle(leagueFilter) {
+  if (leagueFilter === "NFL") return "Rankle NFL Teams";
+  if (leagueFilter === "NBA") return "Rankle NBA Teams";
+  if (leagueFilter === "NHL") return "Rankle NHL Teams";
+  if (leagueFilter === "MLB") return "Rankle MLB Teams";
+
+  return "Rankle Sports Teams";
+}
+
+function getPuzzleChallenge(leagueFilter) {
+  if (leagueFilter) {
+    return `Sort these ${leagueFilter} teams from oldest to newest by franchise founding year.`;
+  }
+
+  return "Sort these NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.";
+}
+
+export async function GET(request) {
+  const today = getTodayDateKey();
+  const leagueFilter = getLeagueFilter(request);
+
+  if (leagueFilter === "INVALID") {
+    return Response.json(
+      {
+        error: "Invalid league filter. Use NFL, NBA, NHL, or MLB.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const availableTeams = leagueFilter
+    ? sportsTeams.filter((team) => team.league === leagueFilter)
+    : sportsTeams;
+
+  const selectedTeams = shuffleWithSeed(
+    availableTeams,
+    `sports-${leagueFilter || "all"}-${today}`
+  ).slice(0, 5);
 
   if (selectedTeams.length < 5) {
     return Response.json(
       {
         error: "Not enough sports teams found for today's puzzle.",
         found: selectedTeams.length,
+        league: leagueFilter || "ALL",
       },
       { status: 500 }
     );
@@ -116,9 +163,9 @@ export async function GET() {
   return Response.json({
     date: today,
     gameType: "sports",
-    title: "Rankle Sports Teams",
-    challenge:
-      "Sort these NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.",
+    league: leagueFilter || "ALL",
+    title: getPuzzleTitle(leagueFilter),
+    challenge: getPuzzleChallenge(leagueFilter),
     items,
     answer: correctOrder.map((team) => ({
       id: team.id,
