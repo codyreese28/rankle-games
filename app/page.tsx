@@ -15,6 +15,7 @@ const categories = {
     label: "MOVIES",
     emoji: "🎬",
     cardEmoji: "🎞️",
+    animationClass: "rankle-card-animate-float",
     introTitle: "Movies",
     introText: "Sort five movies from oldest to newest by release date.",
     introDetail: "Movie puzzles use movie release dates.",
@@ -30,6 +31,7 @@ const categories = {
     label: "VIDEO GAMES",
     emoji: "🎮",
     cardEmoji: "🎮",
+    animationClass: "rankle-card-animate-wiggle",
     introTitle: "Video Games",
     introText: "Sort five video games from oldest to newest by release date.",
     introDetail: "Video game puzzles use original release dates.",
@@ -45,6 +47,7 @@ const categories = {
     label: "MUSIC",
     emoji: "🎵",
     cardEmoji: "💿",
+    animationClass: "rankle-card-animate-spin",
     introTitle: "Music",
     introText: "Sort five albums from oldest to newest by release date.",
     introDetail: "Music puzzles use album release years.",
@@ -60,6 +63,7 @@ const categories = {
     label: "SPORTS TEAMS",
     emoji: "🏆",
     cardEmoji: "🏈🏀⚾",
+    animationClass: "rankle-card-animate-pulse",
     introTitle: "Sports Teams",
     introText:
       "Sort NFL, NBA, NHL, and MLB teams from oldest to newest by franchise founding year.",
@@ -77,6 +81,7 @@ const categories = {
     label: "MYSTERY RANKLE",
     emoji: "❓",
     cardEmoji: "🕵️",
+    animationClass: "rankle-card-animate-mystery",
     introTitle: "Mystery Rankle",
     introText:
       "Sort a mixed set of movies, video games, albums, and sports teams from oldest to newest.",
@@ -96,6 +101,7 @@ const dailyChallenge = {
   label: "HARD DAILY CHALLENGE",
   emoji: "📅",
   cardEmoji: "🗓️",
+  animationClass: "rankle-card-animate-calendar",
   introTitle: "Hard Daily Challenge",
   introText:
     "Sort a hard mixed puzzle from oldest to newest with no category hints shown.",
@@ -430,9 +436,11 @@ export default function HomePage() {
                   }`}
                 >
                   <div
-                    className={`flex h-44 items-center justify-center bg-gradient-to-br ${card.cardClass} text-7xl`}
+                    className={`rankle-card-shine relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br ${card.cardClass} text-7xl`}
                   >
-                    <div className="transition group-hover:scale-110">
+                    <div
+                      className={`${card.animationClass} relative z-10 transition group-hover:scale-125`}
+                    >
                       {card.cardEmoji}
                     </div>
                   </div>

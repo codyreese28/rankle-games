@@ -67,3 +67,126 @@ nav::-webkit-scrollbar-thumb {
 .animate-rankle-card-reveal {
   animation: rankle-card-reveal 420ms ease-out forwards;
 }
+@keyframes rankle-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.04);
+  }
+}
+
+@keyframes rankle-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-7deg) scale(1.05);
+  }
+  40% {
+    transform: rotate(7deg) scale(1.05);
+  }
+  60% {
+    transform: rotate(-4deg) scale(1.04);
+  }
+  80% {
+    transform: rotate(4deg) scale(1.04);
+  }
+}
+
+@keyframes rankle-spin-slow {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes rankle-pulse-pop {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  50% {
+    transform: scale(1.11);
+    filter: drop-shadow(0 12px 18px rgba(255, 255, 255, 0.35));
+  }
+}
+
+@keyframes rankle-mystery-pulse {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12) rotate(-6deg);
+    opacity: 0.85;
+  }
+}
+
+@keyframes rankle-calendar-flip {
+  0%,
+  100% {
+    transform: perspective(500px) rotateX(0deg) scale(1);
+  }
+  50% {
+    transform: perspective(500px) rotateX(16deg) scale(1.08);
+  }
+}
+
+@keyframes rankle-card-shine {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+.rankle-card-animate-float {
+  animation: rankle-float 2.8s ease-in-out infinite;
+}
+
+.rankle-card-animate-wiggle {
+  animation: rankle-wiggle 2.8s ease-in-out infinite;
+}
+
+.rankle-card-animate-spin {
+  animation: rankle-spin-slow 6s linear infinite;
+}
+
+.rankle-card-animate-pulse {
+  animation: rankle-pulse-pop 2.4s ease-in-out infinite;
+}
+
+.rankle-card-animate-mystery {
+  animation: rankle-mystery-pulse 2.7s ease-in-out infinite;
+}
+
+.rankle-card-animate-calendar {
+  animation: rankle-calendar-flip 3s ease-in-out infinite;
+}
+
+.rankle-card-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: translateX(-140%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.rankle-card-shine:hover::before {
+  animation: rankle-card-shine 0.85s ease-in-out;
+}

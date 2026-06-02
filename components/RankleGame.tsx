@@ -1169,6 +1169,17 @@ export default function RankleGame({
     };
   }
 
+  function getAnswerOrderText() {
+    if (!puzzle) return [];
+
+    return puzzle.answer.map((item, index) => ({
+      position: index + 1,
+      title: item.title,
+      releaseDate: item.releaseDate,
+      year: item.releaseDate.slice(0, 4),
+    }));
+  }
+
   function shareResult() {
     if (!puzzle) return;
 
@@ -1476,6 +1487,20 @@ const finalModal = showFinalModal && puzzle && (
         </div>
       )}
 
+      {hintUsed && hintText && (
+        <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left">
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+            Hint Used: {getHintLabel(hintType)}
+          </div>
+
+          <p className="mt-2 text-sm font-black text-slate-800">{hintText}</p>
+
+          <p className="mt-2 text-xs font-bold text-slate-500">
+            Rankle IQ -{hintPenalty || 100} - Perfect game disabled
+          </p>
+        </div>
+      )}
+
       <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
         <h3 className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-slate-500">
           Guess History
@@ -1499,25 +1524,32 @@ const finalModal = showFinalModal && puzzle && (
           Correct Order
         </h3>
 
-        <ol className="space-y-2">
-          {puzzle.answer.map((item, index) => (
-            <li
-              key={item.id}
-              className={`flex items-center justify-between gap-3 rounded-xl ${themeClasses.panel} p-3 text-sm`}
+        <div className="space-y-2">
+          {getAnswerOrderText().map((item) => (
+            <div
+              key={`${item.position}-${item.title}`}
+              className={`flex items-center justify-between gap-3 rounded-2xl border ${themeClasses.border} ${themeClasses.panel} px-4 py-3 text-sm`}
             >
-              <span className="min-w-0 font-bold text-slate-800">
-                <span className="mr-2 text-slate-500">{index + 1}.</span>
-                {item.title}
-              </span>
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${themeClasses.accentSoft} text-sm font-black ${themeClasses.accentText}`}
+                >
+                  {item.position}
+                </div>
+
+                <div className="min-w-0 truncate font-black text-slate-900">
+                  {item.title}
+                </div>
+              </div>
 
               <span
                 className={`shrink-0 rounded-full ${themeClasses.accentPill} px-3 py-1 text-xs font-black ${themeClasses.accentText}`}
               >
-                {item.releaseDate.slice(0, 4)}
+                {item.year}
               </span>
-            </li>
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
 
       <div className={`mt-5 rounded-2xl ${themeClasses.card} p-4`}>
