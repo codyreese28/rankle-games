@@ -483,6 +483,33 @@ export default function HomePage() {
             </div>
           </section>
 
+          <section className="mt-5 rounded-3xl border border-cyan-300/60 bg-[#061f17]/95 px-5 py-4 text-center shadow-2xl shadow-black/25">
+            <div className="flex flex-col items-center justify-between gap-3 md:flex-row">
+              <div className="text-center md:text-left">
+                <div className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
+                  Sponsored
+                </div>
+
+                <div className="mt-1 text-xl font-black text-[#fff4dd]">
+                  Check out CKHacks
+                </div>
+
+                <p className="mt-1 text-sm font-semibold text-[#d8c7a3]">
+                  Visit ckhacks.com for your top tier Call of Duty DMZ hacks.
+                </p>
+              </div>
+
+              <a
+                href="https://ckhacks.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl bg-cyan-500 px-5 py-3 font-black text-white shadow-lg transition hover:bg-cyan-400 active:scale-[0.99]"
+              >
+                Visit Site
+              </a>
+            </div>
+          </section>
+
           <section
             ref={gameSectionRef}
             className="mt-8 rounded-[2rem] border border-white/30 bg-[#fff4dd]/95 p-3 shadow-2xl shadow-black/30 backdrop-blur-md sm:p-5"
