@@ -253,7 +253,7 @@ function SortableCard({
       <img
         src={item.image}
         alt={item.title}
-        className={`h-16 w-16 shrink-0 rounded-2xl shadow-md ring-1 ring-slate-300 sm:h-20 sm:w-20 ${
+        className={`h-14 w-14 shrink-0 rounded-xl shadow-md ring-1 ring-slate-300 sm:h-16 sm:w-16 ${
           theme === "sports" ? "bg-white object-contain p-2" : "object-cover"
         }`}
       />
@@ -1779,225 +1779,184 @@ const achievementUnlockedModal =
     <div
       className={
         embedded
-          ? "w-full pb-24 lg:pb-0"
-          : "relative mx-auto max-w-7xl px-5 py-6 pb-24 lg:pb-6"
+          ? "w-full"
+          : "relative mx-auto max-w-7xl px-5 py-6"
       }
     >
-      <header
-        className={`mb-5 rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-3 text-center shadow-[0_10px_30px_rgba(15,23,42,0.08)] xl:p-4`}
-      >
-        <div
-          className="text-xs font-black uppercase tracking-[0.35em] text-slate-700"
-        >
-          Rankle Games
-        </div>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 xl:text-4xl">
-          {puzzle.title} #{puzzleNumber}
-        </h1>
-        <p className="mt-2 text-sm font-semibold text-slate-500">
-          {puzzle.date}
-        </p>
-      </header>
-
       <div className="grid gap-5">
-        <div className="grid gap-3 xl:grid-cols-4">
+        <div
+          className={`rounded-3xl border ${themeClasses.border} ${themeClasses.card} p-5 text-center shadow-xl`}
+        >
           <div
-            className={`rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center shadow-md`}
+            className={`text-xs font-black uppercase tracking-[0.28em] ${themeClasses.accentText}`}
           >
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Next Puzzle
-            </div>
-
-            <div className={`mt-2 text-2xl font-black ${themeClasses.accentText}`}>
-              {timeUntilNextPuzzle}
-            </div>
+            {accentLabel}
           </div>
 
-          <div
-            className={`rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center shadow-md`}
-          >
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Guesses Used
-            </div>
+          <h1 className="mt-2 text-3xl font-black text-slate-950 md:text-4xl">
+            {puzzle.title} #{puzzleNumber}
+          </h1>
 
-            <div className="mt-3 flex justify-center gap-2">
-              {[0, 1, 2].map((guessSlot) => (
-                <div
-                  key={guessSlot}
-                  className={`h-4 w-4 rounded-full border ${
-                    guessSlot < guesses.length
-                      ? "border-emerald-500 bg-emerald-500"
-                      : "border-slate-300 bg-white/70"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className={`mt-3 text-2xl font-black ${themeClasses.accentText}`}>
-              {guesses.length}/3
-            </div>
-
-            <p className="mt-1 text-xs font-bold text-slate-500">
-              {Math.max(3 - guesses.length, 0)} guesses remaining
-            </p>
-          </div>
-
-          <div
-            className={`rounded-2xl border ${
-              message
-                ? isRevealingAnswer
-                  ? `${themeClasses.accentBorder} ${themeClasses.accentPill}`
-                  : "border-emerald-400 bg-emerald-50"
-                : `${themeClasses.border} ${themeClasses.card}`
-            } p-4 text-center shadow-md`}
-          >
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Latest Guess
-            </div>
-
-            <div
-              className={`mt-2 text-lg font-black ${
-                message ? "text-emerald-900" : "text-slate-500"
-              }`}
-            >
-              {message || "Submit a guess to see your result."}
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center shadow-md`}
-          >
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Hint
-            </div>
-
-            {hintText ? (
-              <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
-                <div className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
-                  Hint Used: {getHintLabel(hintType)}
-                </div>
-
-                <p className="mt-2 text-sm font-black text-slate-800">
-                  {hintText}
-                </p>
-
-                <p className="mt-2 text-xs font-bold text-slate-500">
-                  Rankle IQ -{hintPenalty || 100} - Perfect game disabled
-                </p>
-              </div>
-            ) : (
-              <>
-                <p className="mt-2 text-xs font-semibold text-slate-600">
-                  Choose one hint. Stronger hints cost more Rankle IQ.
-                </p>
-
-                <div className="mt-3 grid gap-2">
-                  <button
-                    onClick={() => useHint("oldest")}
-                    disabled={hintUsed || gameOver}
-                    className="rounded-2xl border border-amber-300 bg-amber-400 px-3 py-2 text-xs font-black text-slate-950 shadow-md transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Oldest Item <span className="ml-1">-100 IQ</span>
-                  </button>
-
-                  <button
-                    onClick={() => useHint("newest")}
-                    disabled={hintUsed || gameOver}
-                    className="rounded-2xl border border-orange-300 bg-orange-400 px-3 py-2 text-xs font-black text-slate-950 shadow-md transition hover:bg-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Newest Item <span className="ml-1">-100 IQ</span>
-                  </button>
-
-                  <button
-                    onClick={() => useHint("decade")}
-                    disabled={hintUsed || gameOver}
-                    className="rounded-2xl border border-sky-300 bg-sky-300 px-3 py-2 text-xs font-black text-slate-950 shadow-md transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    One Decade <span className="ml-1">-50 IQ</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <p className="mt-2 text-sm font-bold text-slate-600">
+            Drag the five items from oldest to newest.
+          </p>
         </div>
 
-        <section
-          className={`rounded-[2rem] border ${themeClasses.border} ${themeClasses.panel} p-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] xl:p-4`}
-        >
-          <div className="mb-4">
-            <div
-              className={`inline-flex rounded-full border ${themeClasses.accentBorder} ${themeClasses.accentPill} px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] ${themeClasses.accentText}`}
-            >
-              {accentLabel}
-            </div>
-
-            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 xl:text-3xl">
-              Arrange the list
-            </h2>
-
-            <p className="mt-1 text-sm font-semibold text-slate-600">
-              Drag the five items from oldest to newest.
-            </p>
-          </div>
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <section
+            className={`rounded-3xl border ${themeClasses.border} ${themeClasses.card} p-4 shadow-xl`}
           >
-            <SortableContext
-              items={items.map((item) => item.id)}
-              strategy={verticalListSortingStrategy}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-3">
-                {items.map((item, index) => (
-                  <SortableCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    gameOver={gameOver}
-                    themeClasses={themeClasses}
-                    animationsEnabled={animationsEnabled}
-                    theme={theme}
+              <SortableContext
+                items={items.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <SortableCard
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      gameOver={gameOver}
+                      themeClasses={themeClasses}
+                      animationsEnabled={animationsEnabled}
+                      theme={theme}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </section>
+
+          <div className="grid gap-4 self-start">
+            <div
+              className={`rounded-3xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center shadow-xl`}
+            >
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                Guesses Used
+              </div>
+
+              <div className="mt-3 flex justify-center gap-2">
+                {[0, 1, 2].map((guessSlot) => (
+                  <div
+                    key={guessSlot}
+                    className={`h-4 w-4 rounded-full border ${
+                      guessSlot < guesses.length
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-slate-300 bg-white/70"
+                    }`}
                   />
                 ))}
               </div>
-            </SortableContext>
-          </DndContext>
-        </section>
+
+              <div className={`mt-3 text-3xl font-black ${themeClasses.accentText}`}>
+                {guesses.length}/3
+              </div>
+
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                {Math.max(3 - guesses.length, 0)} guesses remaining
+              </p>
+            </div>
+
+            <div
+              className={`rounded-3xl border ${
+                message
+                  ? isRevealingAnswer
+                    ? `${themeClasses.accentBorder} ${themeClasses.accentPill}`
+                    : "border-emerald-400 bg-emerald-50"
+                  : `${themeClasses.border} ${themeClasses.card}`
+              } p-4 text-center shadow-xl`}
+            >
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                Latest Guess
+              </div>
+
+              <div
+                className={`mt-2 text-xl font-black ${
+                  message ? "text-emerald-900" : "text-slate-500"
+                }`}
+              >
+                {message || "Submit a guess to see your result."}
+              </div>
+            </div>
+
+            <div
+              className={`rounded-3xl border ${themeClasses.border} ${themeClasses.card} p-4 text-center shadow-xl`}
+            >
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                Hint Options
+              </div>
+
+              {hintText ? (
+                <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">
+                    Hint Used: {getHintLabel(hintType)}
+                  </div>
+
+                  <p className="mt-2 text-sm font-black text-slate-800">
+                    {hintText}
+                  </p>
+
+                  <p className="mt-2 text-xs font-bold text-slate-500">
+                    Rankle IQ -{hintPenalty || 100} - Perfect game disabled
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="mt-2 text-xs font-semibold text-slate-600">
+                    Choose one hint. Stronger hints cost more Rankle IQ.
+                  </p>
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      onClick={() => useHint("oldest")}
+                      disabled={hintUsed || gameOver}
+                      className="rounded-2xl border border-amber-300 bg-amber-400 px-3 py-3 text-xs font-black text-slate-950 shadow-md transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reveal Oldest Item{" "}
+                      <span className="ml-1">-100 IQ</span>
+                    </button>
+
+                    <button
+                      onClick={() => useHint("newest")}
+                      disabled={hintUsed || gameOver}
+                      className="rounded-2xl border border-orange-300 bg-orange-400 px-3 py-3 text-xs font-black text-slate-950 shadow-md transition hover:bg-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reveal Newest Item{" "}
+                      <span className="ml-1">-100 IQ</span>
+                    </button>
+
+                    <button
+                      onClick={() => useHint("decade")}
+                      disabled={hintUsed || gameOver}
+                      className="rounded-2xl border border-sky-300 bg-sky-300 px-3 py-3 text-xs font-black text-slate-950 shadow-md transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reveal One Item&apos;s Decade{" "}
+                      <span className="ml-1">-50 IQ</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {!gameOver && (
-          <div className="hidden lg:block">
-            <button
-              onClick={checkGuess}
-              className={`w-full rounded-2xl ${themeClasses.button} px-5 py-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
-            >
-              Submit Guess
-            </button>
-          </div>
-        )}
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <a
-            href="https://forms.gle/GdFPKPXEg82JywGZ9"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`block w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-center text-sm font-black text-slate-700 transition hover:text-slate-950`}
-          >
-            Report Issue
-          </a>
-
           <button
-            onClick={() => setShowAchievementsModal(true)}
-            className={`w-full rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-3 text-sm font-black text-slate-700 transition hover:text-slate-950`}
+            onClick={checkGuess}
+            className="w-full rounded-3xl bg-emerald-600 px-6 py-5 text-xl font-black text-white shadow-xl shadow-emerald-900/25 transition hover:bg-emerald-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Achievements
+            Submit Guess
           </button>
-        </div>
+        )}
 
         {guesses.length > 0 && (
           <div
-            className={`rounded-2xl border ${themeClasses.border} ${themeClasses.card} p-4 shadow-md`}
+            className={`rounded-3xl border ${themeClasses.border} ${themeClasses.card} p-4 shadow-xl`}
           >
             <div className="mb-3 text-center text-xs font-black uppercase tracking-[0.22em] text-slate-500">
               Guess History
@@ -2026,22 +1985,10 @@ const achievementUnlockedModal =
     </div>
   );
 
-  const mobileSubmitButton = !gameOver && (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-300 bg-[#f7f4ec]/95 p-3 shadow-2xl backdrop-blur-md lg:hidden">
-      <button
-        onClick={checkGuess}
-        className={`w-full rounded-2xl ${themeClasses.button} p-4 text-lg font-black ${themeClasses.buttonText} shadow-lg transition active:scale-[0.99]`}
-      >
-        Submit Guess
-      </button>
-    </div>
-  );
-
   if (embedded) {
     return (
       <div className="text-slate-900">
         {gameContent}
-        {mobileSubmitButton}
         {finalModal}
         {achievementsModal}
         {achievementUnlockedModal}
@@ -2052,10 +1999,9 @@ const achievementUnlockedModal =
 
   return (
     <main
-      className={`min-h-screen overflow-hidden ${themeClasses.pageBg} text-slate-900`}
-    >
+    className={`min-h-screen overflow-hidden ${themeClasses.pageBg} text-slate-900`}
+  >
       {gameContent}
-      {mobileSubmitButton}
       {finalModal}
       {achievementsModal}
       {achievementUnlockedModal}
