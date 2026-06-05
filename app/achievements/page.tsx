@@ -13,9 +13,18 @@ type AchievementStats = {
     sports: number;
     dailyChallenge: number;
   };
+  winsByLeague: {
+    nfl: number;
+    nba: number;
+    nhl: number;
+    mlb: number;
+  };
   currentStreak: number;
   bestStreak: number;
   perfectGames: number;
+  noHintWins: number;
+  highIqGames: number;
+  totalGamesPlayed: number;
   lastWinDate?: string;
 };
 
@@ -38,9 +47,18 @@ function getDefaultAchievementStats(): AchievementStats {
       sports: 0,
       dailyChallenge: 0,
     },
+    winsByLeague: {
+      nfl: 0,
+      nba: 0,
+      nhl: 0,
+      mlb: 0,
+    },
     currentStreak: 0,
     bestStreak: 0,
     perfectGames: 0,
+    noHintWins: 0,
+    highIqGames: 0,
+    totalGamesPlayed: 0,
   };
 }
 
@@ -206,6 +224,39 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     },
 
     {
+      emoji: "🏈",
+      name: "Gridiron Guru",
+      description: "Win 5 NFL-only puzzles.",
+      unlocked: stats.winsByLeague.nfl >= 5,
+      progress: `${Math.min(stats.winsByLeague.nfl, 5)}/5`,
+      category: "Sports Leagues",
+    },
+    {
+      emoji: "🏀",
+      name: "Court Vision",
+      description: "Win 5 NBA-only puzzles.",
+      unlocked: stats.winsByLeague.nba >= 5,
+      progress: `${Math.min(stats.winsByLeague.nba, 5)}/5`,
+      category: "Sports Leagues",
+    },
+    {
+      emoji: "🏒",
+      name: "Ice Cold",
+      description: "Win 5 NHL-only puzzles.",
+      unlocked: stats.winsByLeague.nhl >= 5,
+      progress: `${Math.min(stats.winsByLeague.nhl, 5)}/5`,
+      category: "Sports Leagues",
+    },
+    {
+      emoji: "⚾",
+      name: "Diamond Mind",
+      description: "Win 5 MLB-only puzzles.",
+      unlocked: stats.winsByLeague.mlb >= 5,
+      progress: `${Math.min(stats.winsByLeague.mlb, 5)}/5`,
+      category: "Sports Leagues",
+    },
+
+    {
       emoji: "🌟",
       name: "Daily Challenger",
       description: "Win your first Hard Daily Challenge.",
@@ -228,6 +279,31 @@ function getAchievements(stats: AchievementStats): Achievement[] {
       unlocked: stats.winsByTheme.dailyChallenge >= 10,
       progress: `${Math.min(stats.winsByTheme.dailyChallenge, 10)}/10`,
       category: "Hard Daily Challenge",
+    },
+
+    {
+      emoji: "💡",
+      name: "No Help Needed",
+      description: "Win 10 puzzles without using a hint.",
+      unlocked: stats.noHintWins >= 10,
+      progress: `${Math.min(stats.noHintWins, 10)}/10`,
+      category: "Skill",
+    },
+    {
+      emoji: "🧠",
+      name: "Big Brain",
+      description: "Score 1000+ Rankle IQ in 5 games.",
+      unlocked: stats.highIqGames >= 5,
+      progress: `${Math.min(stats.highIqGames, 5)}/5`,
+      category: "Skill",
+    },
+    {
+      emoji: "📅",
+      name: "Daily Grinder",
+      description: "Play 25 total Rankle games.",
+      unlocked: stats.totalGamesPlayed >= 25,
+      progress: `${Math.min(stats.totalGamesPlayed, 25)}/25`,
+      category: "Skill",
     },
 
     {
@@ -258,7 +334,7 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     {
       emoji: "🏆",
       name: "Perfect Rankler",
-      description: "Solve any puzzle in 1 guess.",
+      description: "Solve any puzzle in 1 guess without using a hint.",
       unlocked: stats.perfectGames >= 1,
       progress: `${Math.min(stats.perfectGames, 1)}/1`,
       category: "Perfect Games",
@@ -266,7 +342,7 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     {
       emoji: "🥇",
       name: "First Guess Flex",
-      description: "Solve 3 puzzles in 1 guess.",
+      description: "Solve 3 puzzles in 1 guess without using hints.",
       unlocked: stats.perfectGames >= 3,
       progress: `${Math.min(stats.perfectGames, 3)}/3`,
       category: "Perfect Games",
@@ -274,7 +350,7 @@ function getAchievements(stats: AchievementStats): Achievement[] {
     {
       emoji: "👑",
       name: "Rankle Royalty",
-      description: "Solve 10 puzzles in 1 guess.",
+      description: "Solve 10 puzzles in 1 guess without using hints.",
       unlocked: stats.perfectGames >= 10,
       progress: `${Math.min(stats.perfectGames, 10)}/10`,
       category: "Perfect Games",
@@ -304,6 +380,14 @@ function getAchievements(stats: AchievementStats): Achievement[] {
       progress: `${Math.min(totalWins, 50)}/50`,
       category: "Overall",
     },
+    {
+      emoji: "👑",
+      name: "Rankle Legend",
+      description: "Win 100 total puzzles.",
+      unlocked: totalWins >= 100,
+      progress: `${Math.min(totalWins, 100)}/100`,
+      category: "Overall",
+    },
   ];
 }
 
@@ -328,6 +412,10 @@ export default function AchievementsPage() {
           ...defaultStats.winsByTheme,
           ...parsedStats.winsByTheme,
         },
+        winsByLeague: {
+          ...defaultStats.winsByLeague,
+          ...parsedStats.winsByLeague,
+        },
       });
     } catch {
       setStats(getDefaultAchievementStats());
@@ -338,6 +426,14 @@ export default function AchievementsPage() {
   const unlockedCount = achievements.filter(
     (achievement) => achievement.unlocked
   ).length;
+
+  const totalWins =
+    stats.winsByTheme.movies +
+    stats.winsByTheme.games +
+    stats.winsByTheme.music +
+    stats.winsByTheme.mystery +
+    stats.winsByTheme.sports +
+    stats.winsByTheme.dailyChallenge;
 
   const masteryLevels = [
     {
@@ -370,15 +466,27 @@ export default function AchievementsPage() {
       name: "Hard Daily",
       wins: stats.winsByTheme.dailyChallenge,
     },
+    {
+      emoji: "🏈",
+      name: "NFL",
+      wins: stats.winsByLeague.nfl,
+    },
+    {
+      emoji: "🏀",
+      name: "NBA",
+      wins: stats.winsByLeague.nba,
+    },
+    {
+      emoji: "🏒",
+      name: "NHL",
+      wins: stats.winsByLeague.nhl,
+    },
+    {
+      emoji: "⚾",
+      name: "MLB",
+      wins: stats.winsByLeague.mlb,
+    },
   ];
-
-  const totalWins =
-    stats.winsByTheme.movies +
-    stats.winsByTheme.games +
-    stats.winsByTheme.music +
-    stats.winsByTheme.mystery +
-    stats.winsByTheme.sports +
-    stats.winsByTheme.dailyChallenge;
 
   const groupedAchievements = achievements.reduce<Record<string, Achievement[]>>(
     (groups, achievement) => {
@@ -406,10 +514,10 @@ export default function AchievementsPage() {
 
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
             Unlock badges by winning puzzles, building streaks, solving Rankle
-            games perfectly, and beating the Hard Daily Challenge.
+            games perfectly, beating league filters, and scoring high Rankle IQ.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <div className="mt-6 grid gap-3 sm:grid-cols-5">
             <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
               <div className="text-3xl font-black text-emerald-800">
                 {unlockedCount}/{achievements.length}
@@ -425,6 +533,15 @@ export default function AchievementsPage() {
               </div>
               <div className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
                 Total Wins
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4">
+              <div className="text-3xl font-black text-emerald-800">
+                {stats.totalGamesPlayed}
+              </div>
+              <div className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                Games Played
               </div>
             </div>
 
@@ -489,12 +606,12 @@ export default function AchievementsPage() {
             </h2>
 
             <p className="mt-2 max-w-2xl text-slate-600">
-              Win puzzles in each category to level up your mastery. Level 5 is
-              the current max.
+              Win puzzles in each category and sports league filter to level up.
+              Level 5 is the current max.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {masteryLevels.map((mastery) => {
               const level = getMasteryLevel(mastery.wins);
               const progress = getMasteryProgress(mastery.wins);

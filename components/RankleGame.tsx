@@ -60,9 +60,18 @@ type AchievementStats = {
     sports: number;
     dailyChallenge: number;
   };
+  winsByLeague: {
+    nfl: number;
+    nba: number;
+    nhl: number;
+    mlb: number;
+  };
   currentStreak: number;
   bestStreak: number;
   perfectGames: number;
+  noHintWins: number;
+  highIqGames: number;
+  totalGamesPlayed: number;
   lastWinDate?: string;
 };
 
@@ -599,9 +608,18 @@ export default function RankleGame({
         sports: 0,
         dailyChallenge: 0,
       },
+      winsByLeague: {
+        nfl: 0,
+        nba: 0,
+        nhl: 0,
+        mlb: 0,
+      },
       currentStreak: 0,
       bestStreak: 0,
       perfectGames: 0,
+      noHintWins: 0,
+      highIqGames: 0,
+      totalGamesPlayed: 0,
     };
   }
 
@@ -623,6 +641,20 @@ export default function RankleGame({
     return theme;
   }
 
+  function getSportsLeagueFromStoragePrefix():
+    | "nfl"
+    | "nba"
+    | "nhl"
+    | "mlb"
+    | null {
+    if (storagePrefix === "rankle-sports-nfl") return "nfl";
+    if (storagePrefix === "rankle-sports-nba") return "nba";
+    if (storagePrefix === "rankle-sports-nhl") return "nhl";
+    if (storagePrefix === "rankle-sports-mlb") return "mlb";
+
+    return null;
+  }
+
   function loadAchievementStats() {
     const savedStats = localStorage.getItem(getAchievementStatsKey());
 
@@ -641,6 +673,10 @@ export default function RankleGame({
         winsByTheme: {
           ...defaultStats.winsByTheme,
           ...parsedStats.winsByTheme,
+        },
+        winsByLeague: {
+          ...defaultStats.winsByLeague,
+          ...parsedStats.winsByLeague,
         },
       };
 
@@ -666,43 +702,97 @@ export default function RankleGame({
     }
   }
 
-  function recordAchievementWin(guessCount: number) {
+  function getFinalRankleIQ(didWin: boolean, guessCount: number) {
+    let score = 0;
+
+    if (didWin) {
+      if (guessCount === 1) score = 1000;
+      if (guessCount === 2) score = 850;
+      if (guessCount === 3) score = 700;
+    } else if (guesses.length > 0) {
+      const bestCorrectCount = Math.max(
+        ...guesses.map((guess) => {
+          const match = guess[0]?.match(/(\d+)\/5/);
+          return match ? Number(match[1]) : 0;
+        })
+      );
+
+      score = bestCorrectCount * 100;
+    }
+
+    if (storagePrefix === "rankle-daily-challenge") {
+      score += 100;
+    }
+
+    if (didWin && guessCount === 1) {
+      score += 50;
+    }
+
+    if (hintUsed) {
+      score -= hintPenalty || 100;
+    }
+
+    return Math.max(Math.min(score, 1100), 0);
+  }
+
+  function recordAchievementResult(didWin: boolean, guessCount: number) {
     if (!puzzle) return;
 
-    const currentStats = loadAchievementStats();
-    const beforeAchievements = getAchievements(currentStats);
+    const mergedStats = loadAchievementStats();
+    const beforeAchievements = getAchievements(mergedStats);
 
     const achievementCategoryKey = getAchievementCategoryKey();
+    const sportsLeague = getSportsLeagueFromStoragePrefix();
+    const finalRankleIQ = getFinalRankleIQ(didWin, guessCount);
 
     const nextWinsByTheme = {
-      ...currentStats.winsByTheme,
+      ...mergedStats.winsByTheme,
       [achievementCategoryKey]:
-        currentStats.winsByTheme[achievementCategoryKey] + 1,
+        mergedStats.winsByTheme[achievementCategoryKey] + (didWin ? 1 : 0),
     };
 
-    let nextCurrentStreak = currentStats.currentStreak;
+    const nextWinsByLeague = {
+      ...mergedStats.winsByLeague,
+      ...(didWin && sportsLeague
+        ? {
+            [sportsLeague]: mergedStats.winsByLeague[sportsLeague] + 1,
+          }
+        : {}),
+    };
 
-    if (!currentStats.lastWinDate) {
+    let nextCurrentStreak = mergedStats.currentStreak;
+
+    if (!didWin) {
+      nextCurrentStreak = 0;
+    } else if (!mergedStats.lastWinDate) {
       nextCurrentStreak = 1;
-    } else if (currentStats.lastWinDate === puzzle.date) {
-      nextCurrentStreak = currentStats.currentStreak;
+    } else if (mergedStats.lastWinDate === puzzle.date) {
+      nextCurrentStreak = mergedStats.currentStreak;
     } else {
       const dayDifference = getDayDifference(
-        currentStats.lastWinDate,
+        mergedStats.lastWinDate,
         puzzle.date
       );
 
       nextCurrentStreak =
-        dayDifference === 1 ? currentStats.currentStreak + 1 : 1;
+        dayDifference === 1 ? mergedStats.currentStreak + 1 : 1;
     }
 
     const updatedStats: AchievementStats = {
+      ...mergedStats,
       winsByTheme: nextWinsByTheme,
+      winsByLeague: nextWinsByLeague,
       currentStreak: nextCurrentStreak,
-      bestStreak: Math.max(currentStats.bestStreak, nextCurrentStreak),
+      bestStreak: Math.max(mergedStats.bestStreak, nextCurrentStreak),
       perfectGames:
-        currentStats.perfectGames + (guessCount === 1 && !hintUsed ? 1 : 0),
-      lastWinDate: puzzle.date,
+        mergedStats.perfectGames +
+        (didWin && guessCount === 1 && !hintUsed ? 1 : 0),
+      noHintWins:
+        mergedStats.noHintWins + (didWin && !hintUsed ? 1 : 0),
+      highIqGames:
+        mergedStats.highIqGames + (finalRankleIQ >= 1000 ? 1 : 0),
+      totalGamesPlayed: mergedStats.totalGamesPlayed + 1,
+      lastWinDate: didWin ? puzzle.date : mergedStats.lastWinDate,
     };
 
     const afterAchievements = getAchievements(updatedStats);
@@ -948,7 +1038,7 @@ export default function RankleGame({
       setGameOver(true);
       setMessage(`Solved in ${newGuesses.length}/3. Nice work.`);
       recordGameResult(true, newGuesses.length);
-      recordAchievementWin(newGuesses.length);
+      recordAchievementResult(true, newGuesses.length);
       setShowFinalModal(true);
       playWinConfetti();
       return;
@@ -959,6 +1049,7 @@ export default function RankleGame({
       setGameOver(true);
       setMessage("Revealing the correct order...");
       recordGameResult(false, newGuesses.length);
+      recordAchievementResult(false, newGuesses.length);
       playLoseSound();
       setIsRevealingAnswer(true);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import RankleGame from "@/components/RankleGame";
@@ -8,6 +8,45 @@ import RankleGame from "@/components/RankleGame";
 type CategoryKey = "movies" | "games" | "music" | "mystery" | "sports";
 type SelectedGameKey = CategoryKey | "dailyChallenge";
 type SportsLeagueFilter = "ALL" | "NFL" | "NBA" | "NHL" | "MLB";
+
+type AchievementStats = {
+  winsByTheme: {
+    movies: number;
+    games: number;
+    music: number;
+    mystery: number;
+    sports: number;
+    dailyChallenge: number;
+  };
+  winsByLeague: {
+    nfl: number;
+    nba: number;
+    nhl: number;
+    mlb: number;
+  };
+  currentStreak: number;
+  bestStreak: number;
+  perfectGames: number;
+  noHintWins: number;
+  highIqGames: number;
+  totalGamesPlayed: number;
+  lastWinDate?: string;
+};
+
+type DailyBoardStatus = "Complete" | "Failed" | "In Progress" | "Not Played";
+
+type DailyBoardItem = {
+  emoji: string;
+  label: string;
+  storagePrefix: string;
+  status: DailyBoardStatus;
+  guessesUsed: number;
+};
+
+type DailyRewardState = {
+  streakFreezes: number;
+  lastRewardDate?: string;
+};
 
 const categories = {
   movies: {
@@ -170,6 +209,241 @@ const sportsLeagueFilters: {
   },
 ];
 
+function getDefaultAchievementStats(): AchievementStats {
+  return {
+    winsByTheme: {
+      movies: 0,
+      games: 0,
+      music: 0,
+      mystery: 0,
+      sports: 0,
+      dailyChallenge: 0,
+    },
+    winsByLeague: {
+      nfl: 0,
+      nba: 0,
+      nhl: 0,
+      mlb: 0,
+    },
+    currentStreak: 0,
+    bestStreak: 0,
+    perfectGames: 0,
+    noHintWins: 0,
+    highIqGames: 0,
+    totalGamesPlayed: 0,
+  };
+}
+
+function getDefaultDailyRewardState(): DailyRewardState {
+  return {
+    streakFreezes: 0,
+  };
+}
+
+function getTotalWins(stats: AchievementStats) {
+  return (
+    stats.winsByTheme.movies +
+    stats.winsByTheme.games +
+    stats.winsByTheme.music +
+    stats.winsByTheme.mystery +
+    stats.winsByTheme.sports +
+    stats.winsByTheme.dailyChallenge
+  );
+}
+
+function getTodayDateKey() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getDailyGameStatus(storagePrefix: string): {
+  status: DailyBoardStatus;
+  guessesUsed: number;
+} {
+  const today = getTodayDateKey();
+  const storageKey = `${storagePrefix}-${today}`;
+  const savedGame = localStorage.getItem(storageKey);
+
+  if (!savedGame) {
+    return {
+      status: "Not Played",
+      guessesUsed: 0,
+    };
+  }
+
+  try {
+    const parsedGame = JSON.parse(savedGame);
+    const guessesUsed = Array.isArray(parsedGame?.guesses)
+      ? parsedGame.guesses.length
+      : 0;
+
+    if (parsedGame?.won === true) {
+      return {
+        status: "Complete",
+        guessesUsed,
+      };
+    }
+
+    if (parsedGame?.gameOver === true) {
+      return {
+        status: "Failed",
+        guessesUsed,
+      };
+    }
+
+    return {
+      status: "In Progress",
+      guessesUsed,
+    };
+  } catch {
+    return {
+      status: "Not Played",
+      guessesUsed: 0,
+    };
+  }
+}
+
+function getTodaysRankleBoard(): DailyBoardItem[] {
+  const boardItems = [
+    {
+      emoji: "🎬",
+      label: "Movies",
+      storagePrefix: "rankle-movies",
+    },
+    {
+      emoji: "🎮",
+      label: "Video Games",
+      storagePrefix: "rankle-video-games",
+    },
+    {
+      emoji: "🎵",
+      label: "Music",
+      storagePrefix: "rankle-music",
+    },
+    {
+      emoji: "🏆",
+      label: "Sports",
+      storagePrefix: "rankle-sports",
+    },
+    {
+      emoji: "🏈",
+      label: "NFL",
+      storagePrefix: "rankle-sports-nfl",
+    },
+    {
+      emoji: "🏀",
+      label: "NBA",
+      storagePrefix: "rankle-sports-nba",
+    },
+    {
+      emoji: "🏒",
+      label: "NHL",
+      storagePrefix: "rankle-sports-nhl",
+    },
+    {
+      emoji: "⚾",
+      label: "MLB",
+      storagePrefix: "rankle-sports-mlb",
+    },
+    {
+      emoji: "❓",
+      label: "Mystery",
+      storagePrefix: "rankle-mystery",
+    },
+    {
+      emoji: "🌟",
+      label: "Hard Daily",
+      storagePrefix: "rankle-daily-challenge",
+    },
+  ];
+
+  return boardItems.map((item) => {
+    const progress = getDailyGameStatus(item.storagePrefix);
+
+    return {
+      ...item,
+      ...progress,
+    };
+  });
+}
+
+function getBoardStatusClass(status: DailyBoardStatus) {
+  if (status === "Complete") {
+    return "border-emerald-300 bg-[#e4f3e9] text-emerald-800";
+  }
+
+  if (status === "Failed") {
+    return "border-red-300 bg-red-50 text-red-700";
+  }
+
+  if (status === "In Progress") {
+    return "border-amber-300 bg-amber-50 text-amber-700";
+  }
+
+  return "border-slate-300 bg-[#ece8df] text-slate-600";
+}
+
+function getBoardStatusText(item: DailyBoardItem) {
+  if (item.status === "Complete") return "Complete";
+  if (item.status === "Failed") return "Failed";
+  if (item.status === "In Progress") return `${item.guessesUsed}/3 Used`;
+
+  return "Not Played";
+}
+
+function getDailyRewardState(): DailyRewardState {
+  const savedReward = localStorage.getItem("rankle-daily-reward");
+
+  if (!savedReward) {
+    return getDefaultDailyRewardState();
+  }
+
+  try {
+    return {
+      ...getDefaultDailyRewardState(),
+      ...JSON.parse(savedReward),
+    };
+  } catch {
+    return getDefaultDailyRewardState();
+  }
+}
+
+function saveDailyRewardState(rewardState: DailyRewardState) {
+  localStorage.setItem("rankle-daily-reward", JSON.stringify(rewardState));
+}
+
+function getPlayedTodayCount(boardItems: DailyBoardItem[]) {
+  return boardItems.filter((item) => item.status !== "Not Played").length;
+}
+
+function getCompletedTodayCount(boardItems: DailyBoardItem[]) {
+  return boardItems.filter((item) => item.status === "Complete").length;
+}
+
+function claimDailyRewardIfEarned(
+  boardItems: DailyBoardItem[],
+  currentRewardState: DailyRewardState
+) {
+  const today = getTodayDateKey();
+  const playedTodayCount = getPlayedTodayCount(boardItems);
+
+  if (playedTodayCount < 3) {
+    return currentRewardState;
+  }
+
+  if (currentRewardState.lastRewardDate === today) {
+    return currentRewardState;
+  }
+
+  const updatedRewardState = {
+    streakFreezes: currentRewardState.streakFreezes + 1,
+    lastRewardDate: today,
+  };
+
+  saveDailyRewardState(updatedRewardState);
+
+  return updatedRewardState;
+}
+
 function getSportsApiPath(league: SportsLeagueFilter) {
   if (league === "ALL") return "/api/sports/today";
 
@@ -209,8 +483,51 @@ export default function HomePage() {
   const [hasStartedPuzzle, setHasStartedPuzzle] = useState(false);
   const [sportsLeagueFilter, setSportsLeagueFilter] =
     useState<SportsLeagueFilter>("ALL");
+  const [achievementStats, setAchievementStats] = useState<AchievementStats>(
+    getDefaultAchievementStats()
+  );
+  const [playerNickname, setPlayerNickname] = useState("");
+  const [todaysBoard, setTodaysBoard] = useState<DailyBoardItem[]>([]);
+  const [dailyRewardState, setDailyRewardState] = useState<DailyRewardState>(
+    getDefaultDailyRewardState()
+  );
 
   const gameSectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const savedStats = localStorage.getItem("rankle-achievements");
+    const savedNickname = localStorage.getItem("rankle-nickname");
+
+    const board = getTodaysRankleBoard();
+    const rewardState = getDailyRewardState();
+    const updatedRewardState = claimDailyRewardIfEarned(board, rewardState);
+
+    setTodaysBoard(board);
+    setDailyRewardState(updatedRewardState);
+    setPlayerNickname(savedNickname || "");
+
+    if (!savedStats) return;
+
+    try {
+      const parsedStats = JSON.parse(savedStats) as AchievementStats;
+      const defaultStats = getDefaultAchievementStats();
+
+      setAchievementStats({
+        ...defaultStats,
+        ...parsedStats,
+        winsByTheme: {
+          ...defaultStats.winsByTheme,
+          ...parsedStats.winsByTheme,
+        },
+        winsByLeague: {
+          ...defaultStats.winsByLeague,
+          ...parsedStats.winsByLeague,
+        },
+      });
+    } catch {
+      setAchievementStats(getDefaultAchievementStats());
+    }
+  }, []);
 
   const selectedGame =
     selectedGameKey === "dailyChallenge"
@@ -268,6 +585,12 @@ export default function HomePage() {
       ...dailyChallenge,
     },
   ];
+
+  const playedTodayCount = getPlayedTodayCount(todaysBoard);
+  const completedTodayCount = getCompletedTodayCount(todaysBoard);
+  const dailyRewardProgress = Math.min(playedTodayCount, 3);
+  const dailyRewardEarnedToday =
+    dailyRewardState.lastRewardDate === getTodayDateKey();
 
   function openCategoryIntro(key: SelectedGameKey) {
     setIntroGameKey(key);
@@ -377,30 +700,6 @@ export default function HomePage() {
           </header>
 
           <section className="relative overflow-hidden rounded-[2.5rem] border border-white/20 bg-[#fff4dd]/75 px-5 py-8 text-center shadow-2xl shadow-black/30 backdrop-blur-sm sm:px-8 lg:px-12">
-            <div className="pointer-events-none absolute left-6 top-12 hidden text-8xl opacity-70 lg:block">
-              🎬
-            </div>
-
-            <div className="pointer-events-none absolute left-[18%] top-24 hidden text-5xl opacity-70 lg:block">
-              🎮
-            </div>
-
-            <div className="pointer-events-none absolute left-[34%] bottom-16 hidden text-7xl opacity-70 lg:block">
-              💿
-            </div>
-
-            <div className="pointer-events-none absolute right-[30%] bottom-16 hidden text-7xl opacity-80 lg:block">
-              🏆
-            </div>
-
-            <div className="pointer-events-none absolute right-[14%] top-16 hidden text-8xl opacity-40 lg:block">
-              ❓
-            </div>
-
-            <div className="pointer-events-none absolute right-8 bottom-20 hidden text-8xl opacity-70 lg:block">
-              🗓️
-            </div>
-
             <div className="relative mx-auto max-w-4xl">
               <div className="text-2xl font-black text-emerald-800 sm:text-3xl">
                 Welcome to
@@ -418,6 +717,234 @@ export default function HomePage() {
                 Put your pop culture knowledge to the test. Can you rank them
                 in the right order?
               </p>
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-3xl border border-emerald-300/60 bg-[#fff4dd]/95 p-5 shadow-2xl shadow-black/25">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="text-center lg:text-left">
+                <div className="text-xs font-black uppercase tracking-[0.3em] text-emerald-700">
+                  Player Dashboard
+                </div>
+
+                <h2 className="mt-2 text-3xl font-black text-[#071b16]">
+                  Welcome back{playerNickname ? `, ${playerNickname}` : ""}!
+                </h2>
+
+                <p className="mt-2 text-sm font-bold text-slate-700">
+                  Track your streaks, wins, perfect games, and Rankle progress.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center">
+                  <div className="text-3xl">🔥</div>
+                  <div className="mt-2 text-2xl font-black text-emerald-800">
+                    {achievementStats.currentStreak}
+                  </div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Current Streak
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center">
+                  <div className="text-3xl">🏆</div>
+                  <div className="mt-2 text-2xl font-black text-emerald-800">
+                    {achievementStats.bestStreak}
+                  </div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Best Streak
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center">
+                  <div className="text-3xl">✅</div>
+                  <div className="mt-2 text-2xl font-black text-emerald-800">
+                    {getTotalWins(achievementStats)}
+                  </div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Total Wins
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center">
+                  <div className="text-3xl">⭐</div>
+                  <div className="mt-2 text-2xl font-black text-emerald-800">
+                    {achievementStats.perfectGames}
+                  </div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Perfect Games
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center">
+                  <div className="text-3xl">📅</div>
+                  <div className="mt-2 text-2xl font-black text-emerald-800">
+                    {achievementStats.totalGamesPlayed}
+                  </div>
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                    Games Played
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-emerald-300 bg-[#e4f3e9] p-4 text-center">
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+                  No-Hint Wins
+                </div>
+                <div className="mt-2 text-2xl font-black text-emerald-900">
+                  {achievementStats.noHintWins}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 text-center">
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+                  1000+ IQ Games
+                </div>
+                <div className="mt-2 text-2xl font-black text-blue-900">
+                  {achievementStats.highIqGames}
+                </div>
+              </div>
+
+              <Link
+                href="/achievements"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] p-4 text-center font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+              >
+                <div className="text-3xl">🏅</div>
+                <div className="mt-2">View Achievements</div>
+              </Link>
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-3xl border border-emerald-300/60 bg-[#fff4dd]/95 p-5 shadow-2xl shadow-black/25">
+            <div className="mb-5 flex flex-col gap-3 text-center md:flex-row md:items-end md:justify-between md:text-left">
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.3em] text-emerald-700">
+                  Today’s Rankle Board
+                </div>
+
+                <h2 className="mt-2 text-3xl font-black text-[#071b16]">
+                  Daily Progress
+                </h2>
+
+                <p className="mt-2 text-sm font-bold text-slate-700">
+                  Track which puzzles you have played today on this device.
+                </p>
+              </div>
+
+              <Link
+                href="/archive"
+                className="rounded-2xl border border-slate-300 bg-[#ece8df] px-5 py-3 text-center font-black text-slate-700 transition hover:bg-[#dfeee5] hover:text-emerald-800"
+              >
+                View Archive
+              </Link>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {todaysBoard.map((item) => (
+                <div
+                  key={item.storagePrefix}
+                  className={`rounded-2xl border p-4 text-center shadow-md ${getBoardStatusClass(
+                    item.status
+                  )}`}
+                >
+                  <div className="text-4xl">{item.emoji}</div>
+
+                  <div className="mt-2 text-lg font-black text-slate-950">
+                    {item.label}
+                  </div>
+
+                  <div className="mt-3 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs font-black">
+                    {getBoardStatusText(item)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-3xl border border-cyan-300/60 bg-[#061f17]/95 p-5 text-[#fff4dd] shadow-2xl shadow-black/25">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="text-center lg:text-left">
+                <div className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
+                  Daily Reward
+                </div>
+
+                <h2 className="mt-2 text-3xl font-black">
+                  Earn a Streak Freeze
+                </h2>
+
+                <p className="mt-2 text-sm font-semibold text-[#d8c7a3]">
+                  Play 3 different Rankle puzzles today to earn 1 Streak Freeze.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-cyan-300/50 bg-white/10 p-4 text-center">
+                  <div className="text-3xl">🎁</div>
+
+                  <div className="mt-2 text-2xl font-black text-cyan-200">
+                    {dailyRewardProgress}/3
+                  </div>
+
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#d8c7a3]">
+                    Played Today
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-300/50 bg-white/10 p-4 text-center">
+                  <div className="text-3xl">✅</div>
+
+                  <div className="mt-2 text-2xl font-black text-emerald-200">
+                    {completedTodayCount}
+                  </div>
+
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#d8c7a3]">
+                    Completed Today
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-blue-300/50 bg-white/10 p-4 text-center">
+                  <div className="text-3xl">🧊</div>
+
+                  <div className="mt-2 text-2xl font-black text-blue-200">
+                    {dailyRewardState.streakFreezes}
+                  </div>
+
+                  <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#d8c7a3]">
+                    Streak Freezes
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-cyan-300/40 bg-white/10 p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-sm font-black text-cyan-200">
+                    {dailyRewardEarnedToday
+                      ? "Reward claimed today!"
+                      : dailyRewardProgress >= 3
+                      ? "Reward ready!"
+                      : `${3 - dailyRewardProgress} more puzzle${
+                          3 - dailyRewardProgress === 1 ? "" : "s"
+                        } needed`}
+                  </div>
+
+                  <p className="mt-1 text-xs font-semibold text-[#d8c7a3]">
+                    Streak Freezes are saved on this device. A future update can
+                    use them to protect your streak if you miss a day.
+                  </p>
+                </div>
+
+                <div className="h-4 w-full overflow-hidden rounded-full bg-black/25 md:max-w-xs">
+                  <div
+                    className="h-full rounded-full bg-cyan-300 transition-all"
+                    style={{ width: `${(dailyRewardProgress / 3) * 100}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
@@ -495,7 +1022,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="mt-1 text-sm font-semibold text-[#d8c7a3]">
-                  Visit ckhacks.com for your top tier Call of Duty DMZ hacks.
+                  DMZ hacks? Not quite. Click at your own risk.
                 </p>
               </div>
 
