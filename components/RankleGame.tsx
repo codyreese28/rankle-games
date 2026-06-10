@@ -1911,7 +1911,7 @@ const achievementUnlockedModal =
                 items={items.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="rankle-drag-area space-y-3">
+                <div className="rankle-game-board rankle-drag-area space-y-3">
                   {items.map((item, index) => (
                     <SortableCard
                       key={item.id}

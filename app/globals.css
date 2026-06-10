@@ -242,3 +242,40 @@ a {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Force draggable game cards to stay visible on desktop and mobile */
+.rankle-drag-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 1px;
+  width: 100%;
+  overflow: visible;
+}
+
+.rankle-draggable-card {
+  position: relative !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  min-height: 4.5rem;
+  z-index: 1;
+  transform-origin: center;
+}
+
+.rankle-draggable-card[aria-pressed="true"],
+.rankle-draggable-card[data-dragging="true"] {
+  opacity: 0.85 !important;
+  z-index: 50;
+}
+
+.rankle-draggable-card * {
+  visibility: visible;
+}
+
+.rankle-game-board {
+  position: relative;
+  overflow: visible;
+}
