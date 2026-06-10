@@ -245,7 +245,7 @@ function SortableCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`group flex items-center gap-3 rounded-3xl border px-3 py-2 shadow-md transition-all duration-300 sm:gap-4 sm:px-4 sm:py-3 ${
+      className={`rankle-draggable-card group flex select-none items-center gap-3 rounded-3xl border px-3 py-2 shadow-md transition-all duration-300 sm:gap-4 sm:px-4 sm:py-3 ${
         isDragging
           ? "scale-[1.03] border-emerald-400 bg-emerald-50 shadow-2xl shadow-emerald-300/70 ring-4 ring-emerald-300"
           : `${themeClasses.border} bg-white/70 shadow-slate-300/40 ${themeClasses.cardHover}`
@@ -262,6 +262,7 @@ function SortableCard({
       <img
         src={item.image}
         alt={item.title}
+        draggable={false}
         className={`h-14 w-14 shrink-0 rounded-xl shadow-md ring-1 ring-slate-300 sm:h-16 sm:w-16 ${
           theme === "sports" ? "bg-white object-contain p-2" : "object-cover"
         }`}
@@ -277,7 +278,7 @@ function SortableCard({
       </div>
 
       {!gameOver && (
-        <div className="px-1 text-lg font-black text-slate-400 sm:text-xl">
+        <div className="rankle-drag-handle flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg font-black text-slate-500 sm:text-xl">
           {"\u2261"}
         </div>
       )}
@@ -322,7 +323,11 @@ export default function RankleGame({
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(TouchSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -1906,7 +1911,7 @@ const achievementUnlockedModal =
                 items={items.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-3">
+                <div className="rankle-drag-area space-y-3">
                   {items.map((item, index) => (
                     <SortableCard
                       key={item.id}
